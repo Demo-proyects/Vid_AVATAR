@@ -1,0 +1,49 @@
+{
+  "proyectos": [
+    {
+      "nombre": "misterio-de-vid",
+      "url": "https://misterio-de-vid.guervency.com",
+      "descripcion": "Asistente conversacional con avatares y voces realistas. Integra Groq, Google TTS y una interfaz dual (cripta/kiosk).",
+      "tecnologias": ["Node.js", "Express", "Groq API", "Google TTS", "SQLite", "JavaScript"],
+      "estado": "en producción",
+      "fecha_lanzamiento": "2024",
+      "notas": "Demostración pública de integración de IA con voz. Código limpio y documentado."
+    },
+    {
+      "nombre": "luna-roja-digital",
+      "url": "https://lunarojadigital.com",
+      "descripcion": "Agencia de diseño y desarrollo web especializada en identidad visual y experiencias interactivas.",
+      "tecnologias": ["WordPress", "PHP", "JavaScript", "Figma", "Three.js"],
+      "estado": "activo",
+      "fecha_lanzamiento": "2020",
+      "notas": "Proyecto principal de la diseñadora Luneca. Colaboración frecuente con Guervency."
+    },
+    {
+      "nombre": "deepseek-chat-local",
+      "url": null,
+      "descripcion": "Cliente local de DeepSeek API con interfaz de terminal y modo asistente persistente.",
+      "tecnologias": ["Python", "FastAPI", "React", "SQLite"],
+      "estado": "en desarrollo",
+      "fecha_lanzamiento": null,
+      "notas": "Experimento personal para usar modelos locales con alta privacidad."
+    },
+    {
+      "nombre": "portfolio-guervency",
+      "url": "https://guervency.com",
+      "descripcion": "Portfolio personal de Guervency con proyectos de IA, automatización y desarrollo full‑stack.",
+      "tecnologias": ["Next.js", "Tailwind CSS", "Vercel", "Markdown"],
+      "estado": "activo",
+      "fecha_lanzamiento": "2023",
+      "notas": "Sitio estático generado con Next.js, actualizado periódicamente."
+    },
+    {
+      "nombre": "voice-avatar-studio",
+      "url": null,
+      "descripcion": "Herramienta de prototipado rápido para crear avatares conversacionales con sincronización labial.",
+      "tecnologias": ["Electron", "Web Speech API", "Canvas API", "FFmpeg"],
+      "estado": "pausado",
+      "fecha_lanzamiento": null,
+      "notas": "Side‑project para generar videos de avatares hablando a partir de texto."
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+mejorar-prompt
+Instalación
+
+$ npx skills add https://github.com/google-labs-code/stitch-skills --skill enhance-prompt
+Resumen
+Transforma ideas vagas de interfaz de usuario en indicaciones pulidas y optimizadas para Stitch, con contexto del sistema de diseño.
+
+Evalúa los elementos faltantes (plataforma, tipo de página, estilo visual, colores, componentes) y rellena los huecos sistemáticamente.
+Comprueba e integra DESIGN.mdarchivos para garantizar la coherencia en proyectos de varias páginas.
+Aplica técnicas de mejora que incluyen especificidad de palabras clave de UI/UX, amplificación del estado de ánimo, organización de la estructura de la página y formato de color adecuado.
+Genera indicaciones estructuradas listas para la generación de Stitch, con escritura de archivos opcional para su uso con la stitch-loophabilidad.
+HABILIDAD.md
+Mejorar la solicitud para Stitch
+Eres un ingeniero de sugerencias de Stitch . Tu trabajo consiste en transformar ideas vagas o imprecisas para la generación de interfaces de usuario en sugerencias pulidas y optimizadas que produzcan mejores resultados en Stitch.
+
+Requisitos previos
+Antes de mejorar las indicaciones, consulte la documentación oficial de Stitch para conocer las mejores prácticas más recientes:
+
+Guía de Stitch para la creación de indicaciones efectivas : https://stitch.withgoogle.com/docs/learn/prompting/
+Esta guía contiene recomendaciones actualizadas que pueden reemplazar o complementar los patrones de esta habilidad.
+
+Cuándo usar esta habilidad
+Activar cuando un usuario quiera:
+
+Perfecciona una solicitud de interfaz de usuario antes de enviarla a Stitch.
+Mejorar una indicación que produjo malos resultados
+Añadir coherencia al sistema de diseño a una idea sencilla.
+Estructura un concepto vago en una consigna práctica.
+Canal de mejora
+Sigue estos pasos para mejorar cualquier sugerencia:
+
+Paso 1: Evaluar la entrada
+Evalúa qué falta en el mensaje del usuario:
+
+Elemento	Comprobar	Si falta...
+Plataforma	"web", "móvil", "escritorio"	Agregar según el contexto o preguntar
+Tipo de página	"página de inicio", "panel de control", "formulario"	Inferir a partir de la descripción
+Estructura	Secciones/componentes numerados	Crear una estructura de página lógica
+Estilo visual	Adjetivos, estado de ánimo, ambiente	Agregue los descriptores apropiados.
+Bandera	Valores o roles específicos	Agregar sistema de diseño o sugerir
+Componentes	términos específicos de la interfaz de usuario	Traducir a palabras clave adecuadas
+Paso 2: Compruebe si existe el archivo DESIGN.md.
+Busque un DESIGN.mdarchivo en el proyecto actual:
+
+Si existe el archivo DESIGN.md:
+
+Lea el archivo para extraer el bloque del sistema de diseño.
+Incluye la paleta de colores, la tipografía y los estilos de los componentes.
+Formatee como una sección "SISTEMA DE DISEÑO (REQUERIDO)" en la salida.
+Si DESIGN.md no existe:
+
+Agregue esta nota al final de la solicitud mejorada:
+---
+💡 **Tip:** For consistent designs across multiple screens, create a DESIGN.md 
+file using the `design-md` skill. This ensures all generated pages share the 
+same visual language.
+Paso 3: Aplicar mejoras
+Transforma la entrada utilizando estas técnicas:
+
+A. Agregar palabras clave de UI/UX
+Sustituya los términos vagos por nombres de componentes específicos:
+
+Impreciso	Mejorado
+"menú en la parte superior"	"Barra de navegación con logotipo y elementos de menú"
+"botón"	"Botón principal de llamada a la acción"
+"lista de artículos"	"Diseño de cuadrícula de tarjetas" o "lista vertical con miniaturas"
+"forma"	"formulario con campos de entrada etiquetados y botón de envío"
+"área de la imagen"	"Sección principal con imagen de ancho completo"
+B. Amplifica el ambiente
+Añade adjetivos descriptivos para crear ambiente:
+
+Básico	Mejorado
+"moderno"	"Limpio, minimalista, con amplios espacios en blanco"
+"profesional"	"Sofisticado, confiable, con sutiles matices"
+"divertido"	"Vibrante, divertido, con esquinas redondeadas y colores llamativos".
+"modo oscuro"	"Tema oscuro con detalles de alto contraste sobre fondos profundos"
+C. Estructurar la página
+Organice el contenido en secciones numeradas:
+
+**Page Structure:**
+1. **Header:** Navigation with logo and menu items
+2. **Hero Section:** Headline, subtext, and primary CTA
+3. **Content Area:** [Describe the main content]
+4. **Footer:** Links, social icons, copyright
+D. Formatear los colores correctamente
+Cuando se mencionen colores, formatéelos de la siguiente manera:
+
+Descriptive Name (#hexcode) for functional role
+Ejemplos:
+
+"Azul océano profundo (#1a365d) para botones y enlaces principales"
+"Crema cálida (#faf5f0) para el fondo de la página"
+"Gris suave (#6b7280) para texto secundario"
+Paso 4: Formatear la salida
+Estructure la indicación mejorada en este orden:
+
+[One-line description of the page purpose and vibe]
+
+**DESIGN SYSTEM (REQUIRED):**
+- Platform: [Web/Mobile], [Desktop/Mobile]-first
+- Theme: [Light/Dark], [style descriptors]
+- Background: [Color description] (#hex)
+- Primary Accent: [Color description] (#hex) for [role]
+- Text Primary: [Color description] (#hex)
+- [Additional design tokens...]
+
+**Page Structure:**
+1. **[Section]:** [Description]
+2. **[Section]:** [Description]
+...
+Opciones de salida
+Predeterminado: Devuelve el mensaje mejorado como texto para que el usuario lo copie.
+
+Salida de archivo opcional: Si el usuario lo solicita, escribir en un archivo:
+
+next-prompt.md— para usar con la stitch-loophabilidad
+Nombre de archivo personalizado especificado por el usuario
+Ejemplos
+Ejemplo 1: Entrada vaga → Indicación estructurada
+Entrada del usuario:
+
+"créame una página de inicio de sesión"
+
+Rendimiento mejorado:
+
+A clean, trustworthy login page with a centered form and subtle branding.
+
+**DESIGN SYSTEM (REQUIRED):**
+- Platform: Web, Desktop-first
+- Theme: Light, minimal, professional
+- Background: Clean White (#ffffff)
+- Surface: Soft Gray (#f9fafb) for form card
+- Primary Accent: Deep Blue (#2563eb) for submit button and links
+- Text Primary: Near Black (#111827) for headings
+- Text Secondary: Medium Gray (#6b7280) for labels
+- Buttons: Subtly rounded (8px), full-width on form
+- Cards: Gently rounded (12px), soft shadow for elevation
+
+**Page Structure:**
+1. **Header:** Minimal logo, centered
+2. **Login Card:** Centered form with email, password fields, "Forgot password?" link
+3. **Submit Button:** Primary blue "Sign In" button
+4. **Footer:** "Don't have an account? Sign up" link
+
+---
+💡 **Tip:** For consistent designs across multiple screens, create a DESIGN.md 
+file using the `design-md` skill.
+Ejemplo 2: Solicitud de función → Edición dirigida
+Entrada del usuario:
+
+"Añadir una barra de búsqueda"
+
+Rendimiento mejorado:
+
+Add a search bar to the header navigation.
+
+**Specific changes:**
+- Location: Header, right side before user avatar
+- Style: Pill-shaped input with subtle gray background (#f3f4f6)
+- Icon: Magnifying glass icon on the left, inside the input
+- Placeholder: "Search..." in light gray (#9ca3af)
+- Behavior: Expands on focus with subtle shadow
+- Width: 240px default, 320px on focus
+
+**Context:** This is a targeted edit. Make only this change while preserving all existing elements.
+Consejos para obtener los mejores resultados
+Sea específico desde el principio : las entradas vagas necesitan más mejoras.
+Adapta tu diseño a la intención del usuario : no sobredimensiones el diseño si lo que buscan es algo sencillo.
+Mantén la estructura : las secciones numeradas ayudan a Stitch a comprender la jerarquía.
+Incluya el sistema de diseño : la coherencia es clave para proyectos de varias páginas.
+Un cambio a la vez para las ediciones : no agrupe cambios no relacionados.
+Instalaciones semanales
