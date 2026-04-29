@@ -1,4 +1,4 @@
-/* avatar.js v2.2 — Sin Vid, pobla voice-selector-panel */
+/* avatar.js v3.1 — TODOS los avatares CON VOZ */
 const AVATAR_STATES={IDLE:'idle',WAITING:'waiting',SPEAKING:'speaking'};
 const AVATARS={
   nara:{id:'nara',name:'Nara01',personality:'Directo, amigable y eficiente. Va al grano.',
@@ -9,6 +9,14 @@ const AVATARS={
     voices:[{id:'es-ES-Neural2-E',name:'Mimi · Simpática'},{id:'es-ES-Neural2-H',name:'Rápida · Fluida'},{id:'es-ES-Chirp-HD-O',name:'Premium · HD'},{id:'es-ES-Chirp3-HD-Leda',name:'Femenina · HD Premium'}],
     defaultVoice:'es-ES-Chirp3-HD-Leda',
     assets:{static:'assets/avatars/mimi-estatico.avif',waiting:'assets/avatars/mimi-espera.webp',speaking:'assets/avatars/mimi-speak.webp'}},
+  ava03:{id:'ava03',name:'Ava03',personality:'Robot amigable con curiosidad infantil. Aprende de cada interacción.',
+    voices:[{id:'es-ES-Chirp3-HD-Leda',name:'Ava03 · HD Principal'},{id:'es-ES-Neural2-C',name:'Neutral · Clara'},{id:'es-ES-Chirp-HD-A',name:'Premium · Natural'}],
+    defaultVoice:'es-ES-Chirp3-HD-Leda',
+    assets:{static:'assets/avatars/ava03-estatico.avif',waiting:'assets/avatars/ava03-estatico.avif',speaking:'assets/avatars/ava03-estatico.avif'}},
+  vid:{id:'vid',name:'Vid',personality:'Misteriosa, enigmática, habla en acertijos.',
+    voices:[{id:'es-ES-Neural2-F',name:'Vid · Voz Profunda'},{id:'es-ES-Chirp3-HD-Pulcherrima',name:'Susurro · HD'},{id:'es-ES-Chirp-HD-D',name:'Enigma · Grave'}],
+    defaultVoice:'es-ES-Neural2-F',
+    assets:{static:'assets/avatars/vid-estatico.avif',waiting:'assets/avatars/vid-estatico.avif',speaking:'assets/avatars/vid-estatico.avif'}},
 };
 
 window.currentAvatarId='nara';

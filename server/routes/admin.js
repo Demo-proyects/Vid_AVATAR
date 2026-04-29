@@ -338,8 +338,7 @@ router.get('/conversations', requireAdmin, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const pageSize = Math.min(parseInt(req.query.pageSize) || 50, 100);
-    // Auto-cleanup al listar: borra las que tienen más de 10 min
-    await db.cleanupOldConversationsMinutes(10);
+    // YA NO se hace auto-cleanup: se muestran TODAS las conversaciones
     const result = await db.listRecentConversations(10, page, pageSize);
     res.json({ success: true, ...result });
   } catch (error) {

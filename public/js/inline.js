@@ -79,103 +79,15 @@ console.log('[inline] Tab listeners registrados (sin pisar sidebar)');
 }catch(e){console.error('[tabs] Error:',e);}
 
 /* ════════════════════════════════════════════════════════════
-   HISTORIAL DE CONVERSACIONES — CORREGIDO con feedback visual inmediato
+   NUEVO CHAT — Limpia conversación actual
    ════════════════════════════════════════════════════════════ */
 try {
-const historyModal = document.getElementById('history-modal');
-const historyList = document.getElementById('history-list');
-const historyCloseBtn = document.getElementById('history-close-btn');
-const historyBackdrop = document.getElementById('history-backdrop');
-
-async function openHistory() {
-  if (!historyModal) {
-    console.error('[history] Modal no encontrado');
-    return;
-  }
-  console.log('[history] Abriendo historial...');
-  historyModal.classList.remove('hidden');
-  historyList.innerHTML = '<div class="history-loading">Cargando historial...</div>';
-  
-  try {
-    const res = await fetch('/api/conversations?limit=50');
-    const data = await res.json();
-    
-    if (!data.success || !data.conversations || data.conversations.length === 0) {
-      historyList.innerHTML = '<div class="history-empty">No hay conversaciones guardadas aún.</div>';
-      return;
-    }
-    
-    historyList.innerHTML = '';
-    data.conversations.forEach(conv => {
-      const item = document.createElement('div');
-      item.className = 'history-item';
-      
-      const date = new Date(conv.createdAt);
-      const dateStr = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      const avatarName = conv.avatarId ? ((window.AVATARS||{})[conv.avatarId]?.name || conv.avatarId) : 'Desconocido';
-      const preview = conv.messages && conv.messages.length > 0 
-        ? conv.messages[0].content.substring(0, 80) + (conv.messages[0].content.length > 80 ? '...' : '')
-        : 'Conversación vacía';
-      
-      item.innerHTML = `
-        <div class="history-item-date">${dateStr}</div>
-        <div class="history-item-avatar">${avatarName} · ${conv.messages?.length || 0} mensajes</div>
-        <div class="history-item-preview">${preview}</div>
-      `;
-      
-      item.addEventListener('click', () => loadConversation(conv.sessionId));
-      historyList.appendChild(item);
-    });
-  } catch (err) {
-    console.error('[history] Error al cargar:', err);
-    historyList.innerHTML = '<div class="history-empty">Error al cargar el historial. Verifica la consola.</div>';
-  }
-}
-
-async function loadConversation(sessionId) {
-  try {
-    const res = await fetch(`/api/conversations/${sessionId}`);
-    const data = await res.json();
-    
-    if (data.success && data.conversation) {
-      const conv = data.conversation;
-      const messages = conv.messages || [];
-      
-      clearChatView();
-      
-      if (typeof window.loadSavedMessages === 'function') {
-        localStorage.setItem('vid_messages', JSON.stringify(messages));
-        localStorage.setItem('vid_avatar', conv.avatarId || 'nara');
-        localStorage.setItem('vid_timestamp', Date.now().toString());
-        location.reload();
-      }
-    }
-  } catch (err) {
-    console.error('[history] Error al cargar conversación:', err);
-  }
-  
-  if (historyModal) historyModal.classList.add('hidden');
-}
-
-function closeHistory() {
-  if (historyModal) historyModal.classList.add('hidden');
-}
-
 function newChat() {
   localStorage.removeItem('vid_messages');
   localStorage.removeItem('vid_timestamp');
-  // Nuevo sessionId → se guarda como conversación separada en el historial
   localStorage.removeItem('vid_session_id');
-  if (typeof window.getOrCreateSessionId === 'function') {
-    window.currentSessionId = window.getOrCreateSessionId();
-  }
   if (typeof window.stopVoice === 'function') window.stopVoice();
   clearChatView();
-  // Mensaje system para que el LLM OLVIDE el contexto anterior
-  if (window.ChatManager) {
-    window.ChatManager.messages = [{ role: 'system', content: 'Has olvidado toda la conversación anterior. Esta es una conversación completamente nueva. No menciones nada de lo hablado antes. Empieza desde cero. No digas que has olvidado, simplemente actúa como si fuera la primera interacción.' }];
-  }
-  // Limpiar conversación en el servidor
   if (typeof window.saveMessages === 'function') {
     window.saveMessages([], window.currentAvatarId || 'nara');
   }
@@ -186,59 +98,26 @@ function clearChatView() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
-  
-  // ChatManager puede no estar disponible si chat.js no cargó aún
-  if (window.ChatManager && typeof window.ChatManager === 'object') {
-    try {
-      window.ChatManager.messages = [];
-      window.ChatManager.currentSentence = '';
-      window.ChatManager.isResponding = false;
-    } catch(_){}
+  if (typeof window.resetMessages === 'function') {
+    window.resetMessages();
   }
 }
 
-// Event listeners para historial y nuevo chat
-document.getElementById('history-btn-sidebar')?.addEventListener('click', function(e) {
-  e.stopPropagation();
-  console.log('[inline] Click en history-btn-sidebar');
-  openHistory();
-});
-historyCloseBtn?.addEventListener('click', function(e) {
-  e.stopPropagation();
-  closeHistory();
-});
-historyBackdrop?.addEventListener('click', function(e) {
-  e.stopPropagation();
-  closeHistory();
-});
+// Event listeners para nuevo chat (sidebar y mobile tabs)
 document.getElementById('new-chat-btn-sidebar')?.addEventListener('click', function(e) {
   e.stopPropagation();
-  console.log('[inline] Click en new-chat-btn-sidebar');
   newChat();
-});
-// Mobile tabs para historial y nuevo chat
-document.querySelector('.d1-mob-tab-history')?.addEventListener('click', function(e) {
-  e.stopPropagation();
-  console.log('[inline] Click en d1-mob-tab-history');
-  openHistory();
 });
 document.querySelector('.d1-mob-tab-newchat')?.addEventListener('click', function(e) {
   e.stopPropagation();
-  console.log('[inline] Click en d1-mob-tab-newchat');
   newChat();
-});
-document.querySelector('.d2-mob-tab-history')?.addEventListener('click', function(e) {
-  e.stopPropagation();
-  console.log('[inline] Click en d2-mob-tab-history');
-  openHistory();
 });
 document.querySelector('.d2-mob-tab-newchat')?.addEventListener('click', function(e) {
   e.stopPropagation();
-  console.log('[inline] Click en d2-mob-tab-newchat');
   newChat();
 });
-console.log('[inline] History/NewChat listeners registrados');
-}catch(e){console.error('[history] Error:',e);}
+console.log('[inline] NewChat listeners registrados');
+}catch(e){console.error('[newchat] Error:',e);}
 
 /* ════════════════════════════════════════════════════════════
    FEEDBACK VISUAL INMEDIATO para botones del sidebar

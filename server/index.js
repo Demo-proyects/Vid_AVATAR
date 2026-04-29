@@ -150,32 +150,11 @@ const server = app.listen(PORT, async () => {
     console.error(' Error al seed datos demo:', err.message);
   }
 
-  const db = require('./services/database');
-  // Limpieza forzosa al arrancar — borra TODAS las conversaciones >10min
-  try {
-    const forceClean = await db.forceCleanupAllOld();
-    console.log(` Limpieza forzosa inicial completada`);
-  } catch (err) {
-    console.error(' Error en limpieza forzosa:', err.message);
-  }
-  const cleanupInterval = setInterval(async () => {
-    try {
-      const result = await db.cleanupOldConversationsMinutes(10);
-      if (result.deleted > 0) console.log(` Limpieza 10min: ${result.deleted} conversaciones eliminadas`);
-      const result2 = await db.cleanupMessageContent(5);
-      if (result2.cleaned > 0) console.log(` Limpieza contenido: ${result2.cleaned} conversaciones`);
-    } catch (err) {
-      console.error(' Error en limpieza:', err.message);
-    }
-  }, 10 * 60 * 1000);
-
   process.on('SIGTERM', () => {
     console.log(' SIGTERM recibido — cerrando servidor...');
-    clearInterval(cleanupInterval);
     server.close(() => process.exit(0));
   });
   process.on('SIGINT', () => {
-    clearInterval(cleanupInterval);
     server.close(() => process.exit(0));
   });
 });

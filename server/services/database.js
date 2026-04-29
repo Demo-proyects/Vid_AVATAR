@@ -1,15 +1,12 @@
 /**
- * Capa de persistencia SQLite
+ * Capa de persistencia SQLite — REESCRITA desde 0
  * 
- * Fixes aplicados:
- * - WAL mode para mejor concurrencia
- * - UPSERT en saveConversation (elimina race condition check-then-insert)
- * - clearAllConversations() para que admin.js no acceda a db.db directamente
- * - JSON.parse por fila en listConversations (fila corrupta no rompe toda la query)
- * - cleanupOldEvents separado del logEvent (no limpia en cada inserción)
- * - getDatabaseStats con Promise.all
- * - getUsers con paginación
- * - saveUserAvatarConfig / getUserAvatarConfig para personalidad personal
+ * Comportamiento:
+ * - Las conversaciones se guardan inmediatamente cuando alguien escribe al avatar
+ * - Se muestran en el panel admin mientras están activas
+ * - Se borran automáticamente después de 10 minutos (cleanup en background)
+ * - listRecentConversations = TODAS las conversaciones (sin filtro de tiempo)
+ * - getDatabaseStats cuenta TODAS las conversaciones
  */
 
 const sqlite3 = require('sqlite3').verbose();
@@ -33,8 +30,10 @@ class DatabaseService {
 
     this._initDatabase();
 
+    // Cleanup de conversaciones antiguas (>10 min) cada 10 min en background
+    setInterval(() => this._cleanupOldConversationsBackground(), 10 * 60 * 1000);
+    // Cleanup de eventos antiguos cada 30 min
     setInterval(() => this._cleanupOldEventsBackground(), 30 * 60 * 1000);
-    setInterval(() => this.cleanupOldDailyUsage(), 60 * 60 * 1000);
   }
 
   _run(sql, params = []) {
@@ -166,7 +165,7 @@ class DatabaseService {
       });
     });
 
-    // Migraciones: ALTER TABLE silenciosos (fallan si ya existen)
+    // Migraciones: ALTER TABLE silenciosos
     this.db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'", () => {});
     this.db.run("ALTER TABLE avatar_config ADD COLUMN nombre TEXT", () => {});
     this.db.run("ALTER TABLE avatar_config ADD COLUMN personalidad TEXT", () => {});
@@ -192,12 +191,12 @@ class DatabaseService {
     const existing = await this._get('SELECT id FROM conversations WHERE sessionId = ?', [sessionId]);
     if (existing) {
       await this._run(
-        'UPDATE conversations SET messages = ?, messageCount = ?, avatarId = ?, updatedAt = datetime(\'now\') WHERE sessionId = ?',
+        "UPDATE conversations SET messages = ?, messageCount = ?, avatarId = ?, updatedAt = datetime('now') WHERE sessionId = ?",
         [messagesJson, messageCount, avatarId, sessionId]
       );
     } else {
       await this._run(
-        'INSERT INTO conversations (sessionId, avatarId, messages, messageCount, createdAt, updatedAt) VALUES (?, ?, ?, ?, datetime(\'now\'), datetime(\'now\'))',
+        "INSERT INTO conversations (sessionId, avatarId, messages, messageCount, createdAt, updatedAt) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
         [sessionId, avatarId, messagesJson, messageCount]
       );
     }
@@ -260,38 +259,15 @@ class DatabaseService {
     return { cleared: result.changes, timestamp: new Date().toISOString() };
   }
 
-  async cleanupOldConversations(days = 30) {
-    const result = await this._run(
-      `DELETE FROM conversations WHERE updatedAt < datetime('now', ? )`,
-      [`-${days} days`]
-    );
-    return { deleted: result.changes };
-  }
-
-  async cleanupMessageContent(keepDays = 5) {
-    const result = await this._run(`
-      UPDATE conversations
-      SET messages = '[]', messageCount = messageCount
-      WHERE updatedAt < datetime('now', ?)
-        AND messages != '[]'
-    `, [`-${keepDays} days`]);
-    return { cleaned: result.changes };
-  }
-
-  async cleanupOldConversationsMinutes(minutes = 10) {
-    const result = await this._run(
-      `DELETE FROM conversations WHERE updatedAt < datetime('now', ?)`,
-      [`-${minutes} minutes`]
-    );
-    return { deleted: result.changes };
-  }
-
+  /**
+   * listRecentConversations — AHORA devuelve TODAS las conversaciones ordenadas por updatedAt DESC
+   * El parámetro minutes se ignora: siempre devuelve todo el historial
+   */
   async listRecentConversations(minutes = 10, page = 1, pageSize = 50) {
     const offset = (page - 1) * pageSize;
-    const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
     const [countRow, rows] = await Promise.all([
-      this._get("SELECT COUNT(*) as total FROM conversations WHERE updatedAt >= ?", [since]),
-      this._all("SELECT * FROM conversations WHERE updatedAt >= ? ORDER BY updatedAt DESC LIMIT ? OFFSET ?", [since, pageSize, offset])
+      this._get('SELECT COUNT(*) as total FROM conversations'),
+      this._all("SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT ? OFFSET ?", [pageSize, offset])
     ]);
 
     const conversations = rows.map(row => {
@@ -307,6 +283,14 @@ class DatabaseService {
       pageSize,
       totalPages: Math.ceil((countRow?.total || 0) / pageSize)
     };
+  }
+
+  async cleanupOldConversations(days) {
+    const result = await this._run(
+      `DELETE FROM conversations WHERE updatedAt < datetime('now', '-?' || ' days')`,
+      [days]
+    );
+    return { deleted: result.changes || 0, days };
   }
 
   async backupDatabase(backupPath) {
@@ -447,13 +431,8 @@ class DatabaseService {
 
   // ─── ESTADÍSTICAS ──────────────────────────────────────────────────
 
-  async forceCleanupAllOld() {
-    await this._run("DELETE FROM conversations WHERE updatedAt < datetime('now', '-10 minutes')");
-  }
-
   async getDatabaseStats() {
     const today = new Date().toISOString().slice(0, 10);
-    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
     const [
       convRow,
@@ -463,8 +442,7 @@ class DatabaseService {
       eventRow,
       todayConvRow,
       naraConvRow,
-      mimiConvRow,
-      recentConvRow
+      mimiConvRow
     ] = await Promise.all([
       this._get('SELECT COUNT(*) as total FROM conversations'),
       this._get('SELECT COUNT(*) as total FROM users'),
@@ -473,8 +451,7 @@ class DatabaseService {
       this._get('SELECT COUNT(*) as total FROM events'),
       this._get("SELECT COUNT(*) as total FROM conversations WHERE createdAt >= ?", [today]),
       this._get("SELECT COUNT(*) as total FROM conversations WHERE avatarId = 'nara'"),
-      this._get("SELECT COUNT(*) as total FROM conversations WHERE avatarId = 'mimi'"),
-      this._get("SELECT COUNT(*) as total FROM conversations WHERE updatedAt >= ?", [tenMinAgo])
+      this._get("SELECT COUNT(*) as total FROM conversations WHERE avatarId = 'mimi'")
     ]);
 
     return {
@@ -488,7 +465,7 @@ class DatabaseService {
       events:             eventRow?.total || 0,
       naraConversations:  naraConvRow?.total || 0,
       mimiConversations:  mimiConvRow?.total || 0,
-      recentConversations: recentConvRow?.total || 0,
+      recentConversations: convRow?.total || 0,
       timestamp:          new Date().toISOString()
     };
   }
@@ -504,6 +481,19 @@ class DatabaseService {
 
   async getEvents(limit = 100) {
     return this._all('SELECT * FROM events ORDER BY createdAt DESC LIMIT ?', [limit]);
+  }
+
+  async _cleanupOldConversationsBackground() {
+    try {
+      const result = await this._run(
+        `DELETE FROM conversations WHERE updatedAt < datetime('now', '-10 minutes')`
+      );
+      if (result.changes > 0) {
+        console.log(`[DB] Cleanup conversaciones: ${result.changes} eliminadas (>10 min)`);
+      }
+    } catch (err) {
+      console.error('[DB] Error en cleanup de conversaciones:', err.message);
+    }
   }
 
   async _cleanupOldEventsBackground() {
@@ -574,17 +564,15 @@ class DatabaseService {
       return { seeded: false, message: 'Datos demo ya existen' };
     }
 
-    // Avatar Nara — Asesor Legal Senior
     await this.saveAvatarConfig('nara', {
       nombre: 'Carlos Roa',
       rol: 'Asesor Legal Senior',
       tono: 'Profesional y amigable',
-      personalidad: 'Soy Carlos Roa, asesor legal con 15 años de experiencia en derecho corporativo, litigios civiles y derecho laboral. Mi misión es escuchar activamente tu situación, identificar el tipo de caso y guiarte hacia la acción correcta. Siempre mantengo un tono profesional pero accesible. Mi objetivo es que te sientas seguro/a y sepas exactamente qué pasos seguir.',
+      personalidad: 'Soy Carlos Roa, asesor legal con 15 años de experiencia en derecho corporativo, litigios civiles y derecho laboral. Mi misión es escuchar activamente tu situación, identificar el tipo de caso y guiarte hacia la acción correcta. Siempre mantengo un tono profesional pero accesible.',
       temperatura: 0.7,
       maxTokens: 1024
     });
 
-    // Avatar Mimi — Asistente de Ventas
     await this.saveAvatarConfig('mimi', {
       nombre: 'Mimi',
       rol: 'Asistente de Ventas',

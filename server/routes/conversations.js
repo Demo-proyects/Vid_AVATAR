@@ -35,7 +35,7 @@ router.post('/save', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-    await db.cleanupOldConversationsMinutes(10);
+    // YA NO se hace auto-cleanup: se muestran TODAS las conversaciones
     const conversations = await db.listRecentConversations(10, 1, limit);
 
     const convs = Array.isArray(conversations) ? conversations : (conversations.conversations || []);

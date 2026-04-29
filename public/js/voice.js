@@ -1,8 +1,12 @@
-/* voice.js v2.3 — Voz simplificada: usa defaultVoice del avatar */
+/* voice.js v2.3 — Expone _voiceToggleExternal + TTS retry limit */
 let isVoiceEnabled=true;
 let _audioQueue=[];
 let _isPlaying=false;
 let _currentAudio=null;
+let _ttsFailureCount=0;
+let _ttsCooldownUntil=0;
+const _TTS_MAX_RETRIES=5;
+const _TTS_COOLDOWN_MS=60000;
 
 window.enableAudioOnInteraction=async function(){
   try{const ctx=new(window.AudioContext||window.webkitAudioContext)();await ctx.resume();}catch(e){}
@@ -13,25 +17,10 @@ function _stripEmojis(text){
 }
 
 function initVoice(){
-  ['voice-toggle-btn','voice-toggle-btn-cripta','voice-toggle-btn-kiosk'].forEach(id=>{
+  ['voice-toggle-btn-cripta','voice-toggle-btn-kiosk'].forEach(id=>{
     document.getElementById(id)?.addEventListener('click',_toggleVoice);
   });
   _updateVoiceUI();
-  
-  // Habilitar audio en la primera interacción del usuario
-  const enableAudio = async () => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      await ctx.resume();
-      console.log('[voice] AudioContext habilitado por interacción del usuario');
-    } catch(e) {}
-    document.removeEventListener('click', enableAudio);
-    document.removeEventListener('keydown', enableAudio);
-    document.removeEventListener('touchstart', enableAudio);
-  };
-  document.addEventListener('click', enableAudio, { once: true });
-  document.addEventListener('keydown', enableAudio, { once: true });
-  document.addEventListener('touchstart', enableAudio, { once: true });
 }
 
 function _toggleVoice(){
@@ -39,6 +28,11 @@ function _toggleVoice(){
   if(!isVoiceEnabled)_stopAll();
   _updateVoiceUI();
 }
+
+// Expuesto para el botón en el panel de voz del sidebar
+window._voiceToggleExternal=function(){
+  _toggleVoice();
+};
 
 function _updateVoiceUI(){
   const on=document.getElementById('voice-icon-on');
@@ -48,6 +42,14 @@ function _updateVoiceUI(){
   ['voice-toggle-btn-cripta','voice-toggle-btn-kiosk'].forEach(id=>{
     const b=document.getElementById(id);if(b)b.classList.toggle('muted',!isVoiceEnabled);
   });
+  // Actualizar texto y clase del botón mute en el panel
+  const muteBtn=document.getElementById('voice-mute-btn');
+  if(muteBtn){
+    muteBtn.textContent=isVoiceEnabled?'🔇 Silenciar':'🔊 Activar voz';
+    muteBtn.classList.toggle('muted',!isVoiceEnabled);
+  }
+  const panelBtn=document.getElementById('voice-panel-btn');
+  if(panelBtn)panelBtn.classList.toggle('on',isVoiceEnabled);
 }
 
 function speakText(text){
@@ -77,11 +79,24 @@ async function _processQueue(){
 }
 
 async function _fetchTTS(text,voiceId){
+  // Evitar spam de errores: si ya fallamos mucho, esperar cooldown
+  if(_ttsFailureCount>=_TTS_MAX_RETRIES&&Date.now()<_ttsCooldownUntil){
+    console.warn(`[voice] TTS en cooldown (${Math.ceil((_ttsCooldownUntil-Date.now())/1000)}s restantes)`);return null;
+  }
+  // Si pasó el cooldown, resetear contador
+  if(Date.now()>=_ttsCooldownUntil&&_ttsFailureCount>=_TTS_MAX_RETRIES)_ttsFailureCount=0;
   try{
     const res=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,voice:voiceId})});
     if(!res.ok)throw new Error(`TTS HTTP ${res.status}`);
+    // Éxito — resetear contador de fallos
+    _ttsFailureCount=0;
     return URL.createObjectURL(await res.blob());
-  }catch(err){console.error('[voice] TTS:',err);return null;}
+  }catch(err){
+    _ttsFailureCount++;
+    if(_ttsFailureCount>=_TTS_MAX_RETRIES)_ttsCooldownUntil=Date.now()+_TTS_COOLDOWN_MS;
+    console.error(`[voice] TTS: ${err.message} (fallo ${_ttsFailureCount}/${_TTS_MAX_RETRIES})`);
+    return null;
+  }
 }
 
 function _playAudioUrl(url,isObjectUrl){
@@ -91,7 +106,7 @@ function _playAudioUrl(url,isObjectUrl){
     const done=()=>{if(isObjectUrl)URL.revokeObjectURL(url);_currentAudio=null;_isPlaying=false;if(typeof setAvatarState==='function')setAvatarState(AVATAR_STATES.WAITING);resolve();_processQueue();};
     audio.addEventListener('ended',done);
     audio.addEventListener('error',done);
-    audio.play().catch(err=>{console.warn('[voice] Error al reproducir audio:',err.message);_currentAudio=null;_isPlaying=false;resolve();_processQueue();});
+    audio.play().catch(err=>{console.warn('[voice] Autoplay bloqueado:',err);_currentAudio=null;_isPlaying=false;resolve();_processQueue();});
   });
 }
 

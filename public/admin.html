@@ -580,6 +580,8 @@ textarea{min-height:90px;line-height:1.55}
         <div class="av-select-row">
           <button class="av-chip active" id="av-chip-nara" onclick="switchAvatar('nara')"><span class="av-emoji">🧑‍💼</span> Nara01</button>
           <button class="av-chip" id="av-chip-mimi" onclick="switchAvatar('mimi')"><span class="av-emoji">✨</span> Mimi</button>
+          <button class="av-chip" id="av-chip-ava03" onclick="switchAvatar('ava03')"><span class="av-emoji">🤖</span> Ava03</button>
+          <button class="av-chip" id="av-chip-vid" onclick="switchAvatar('vid')"><span class="av-emoji">👁️</span> Vid</button>
         </div>
 
         <div class="av-layout">
@@ -772,6 +774,8 @@ textarea{min-height:90px;line-height:1.55}
           <div class="tabs-row">
             <button class="tab-btn active" onclick="switchGlobalTab('nara',this)">🧑‍💼 Nara01</button>
             <button class="tab-btn" onclick="switchGlobalTab('mimi',this)">✨ Mimi</button>
+            <button class="tab-btn" onclick="switchGlobalTab('ava03',this)">🤖 Ava03</button>
+            <button class="tab-btn" onclick="switchGlobalTab('vid',this)">👁️ Vid</button>
           </div>
           <div id="global-config-form">
             <div class="loading"><div class="spinner"></div></div>
@@ -902,7 +906,7 @@ textarea{min-height:90px;line-height:1.55}
 <script>
 /* ═══ i18n ════════════════════════════════════════════════ */
 const LANG = (navigator.language || 'es').slice(0, 2);
-const LOCALE = ['en','fr'].includes(LANG) ? LANG : 'es';
+let LOCALE = ['en','fr'].includes(LANG) ? LANG : 'es';
 
 const _ = {
   es: {
@@ -1184,8 +1188,11 @@ const S = {
 
 const AVATARS_META = {
   nara: { emoji:'🧑‍💼', name:'Nara01', greet:'Hola, ¿en qué puedo ayudarte hoy?' },
-  mimi: { emoji:'✨', name:'Mimi', greet:'¡Hola! 💫 ¿Cómo puedo hacerte el día mejor?' }
+  mimi: { emoji:'✨', name:'Mimi', greet:'¡Hola! 💫 ¿Cómo puedo hacerte el día mejor?' },
+  ava03: { emoji:'🤖', name:'Ava03', greet:'¡Hola! Estoy aprendiendo contigo.' },
+  vid: { emoji:'👁️', name:'Vid', greet:'Bienvenido al misterio…' }
 };
+// Synced with public/js/avatar.js AVATARS — keep in sync
 
 const DEMO_CONFIG = {
   nara: {
@@ -1298,7 +1305,8 @@ function showDocsAlert(sec) {
 
 /* ═══ API HELPERS ═══════════════════════════════════════════ */
 function apiHeaders(json=true){
-  const h={'Authorization':S.token?`Bearer ${S.token}`:''};
+  const h={};
+  if(S.token) h['Authorization']='Bearer '+S.token;
   if(json) h['Content-Type']='application/json';
   return h;
 }
@@ -1465,7 +1473,7 @@ async function loadDashboard(){
   chart.innerHTML=[
     {id:'nara',emoji:'🧑‍💼',label:'Nara01',count:naraCount,color:'var(--a2)'},
     {id:'mimi',emoji:'✨',label:'Mimi',count:mimiCount,color:'var(--gold)'}
-  ].map(av=>`<div>
+  ].filter(av=>av.count>0||av.id==='nara').map(av=>`<div>
     <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
       <span style="color:var(--t2)">${av.emoji} ${av.label}</span>
       <span style="color:var(--t1);font-weight:600">${av.count}</span>
@@ -1476,13 +1484,20 @@ async function loadDashboard(){
 }
 
 async function checkSystemStatus(){
-  const {ok,data}=await api('GET','/api/admin/system/status');
+  const res=await fetch('/api/admin/system/status',{headers:apiHeaders()}).catch(()=>null);
   const dot=document.getElementById('sys-dot');
   const txt=document.getElementById('sys-status-text');
-  if(ok&&data.status==='operational'){
-    dot.className='status-dot ok';txt.textContent='Operativo';
+  if(res&&res.ok){
+    const data=await res.json().catch(()=>({}));
+    if(data.status==='operational'){
+      dot.className='status-dot ok';txt.textContent='Operativo';
+    } else {
+      dot.className='status-dot err';
+      txt.textContent=data.message||'Error parcial';
+    }
   } else {
-    dot.className='status-dot err';txt.textContent='Error';
+    dot.className='status-dot err';
+    txt.textContent=res?'Error '+res.status:'Sin conexión';
   }
 }
 
@@ -1513,19 +1528,19 @@ function renderAvatarForm(){
   const av=S.currentAvatar;
   const userConf=S.userConfigs[av]||{};
   const globalConf=S.avatarConfigs[av]||{};
-  const demo=DEMO_CONFIG[av];
+  const demo=DEMO_CONFIG[av]||{};
   const conf={
-    nombre:      userConf.nombre       || globalConf.nombre       || demo.nombre,
-    rol:         userConf.rol          || globalConf.rol          || demo.rol,
-    tono:        userConf.tono         || globalConf.tono         || demo.tono,
-    personalidad:userConf.personalidad || globalConf.personalidad || demo.personalidad,
-    contexto:    userConf.contexto     || globalConf.contexto     || demo.contexto,
-    tel:         userConf.tel          || globalConf.tel          || demo.tel,
-    email:       userConf.email        || globalConf.email        || demo.email,
-    horario:     userConf.horario      || globalConf.horario      || demo.horario,
-    link:        userConf.link         || globalConf.link         || demo.link,
-    cta:         userConf.cta          || globalConf.cta          || demo.cta,
-    flows:       userConf.flows        || globalConf.flows        || DEMO_FLOWS,
+    nombre:      userConf.nombre       || globalConf.nombre       || demo.nombre       || '',
+    rol:         userConf.rol          || globalConf.rol          || demo.rol          || '',
+    tono:        userConf.tono         || globalConf.tono         || demo.tono         || 'Profesional y amigable',
+    personalidad:userConf.personalidad || globalConf.personalidad || demo.personalidad || '',
+    contexto:    userConf.contexto     || globalConf.contexto     || demo.contexto     || '',
+    tel:         userConf.tel          || globalConf.tel          || demo.tel          || '',
+    email:       userConf.email        || globalConf.email        || demo.email        || '',
+    horario:     userConf.horario      || globalConf.horario      || demo.horario      || '',
+    link:        userConf.link         || globalConf.link         || demo.link         || '',
+    cta:         userConf.cta          || globalConf.cta          || demo.cta          || '',
+    flows:       userConf.flows        || globalConf.flows        || (S.user ? [] : DEMO_FLOWS),
   };
   setVal('av-nombre',conf.nombre);
   setVal('av-rol',conf.rol);
@@ -1660,7 +1675,7 @@ function updateFlow(i,key,val){if(S.flows[i])S.flows[i][key]=val;}
 function loadExampleFlow(){if(S.flows.length===0)S.flows=DEMO_FLOWS.slice(0,1);else S.flows.push(DEMO_FLOWS[S.flows.length%DEMO_FLOWS.length]);renderFlows();toast('Flujo de ejemplo cargado','info');}
 
 function updatePreview(){
-  const meta=AVATARS_META[S.currentAvatar];
+  const meta=AVATARS_META[S.currentAvatar]||{emoji:'🤖',name:'Asistente',greet:''};
   const nombre=document.getElementById('av-nombre')?.value||meta.name;
   const rol=document.getElementById('av-rol')?.value||'Asistente virtual';
   const pers=document.getElementById('av-personalidad')?.value||'';
@@ -1677,7 +1692,8 @@ function generatePreview(){
   const pers=document.getElementById('av-personalidad')?.value||'';
   const cta=document.getElementById('av-cta')?.value||'';
   el.innerHTML='<span class="preview-cursor"></span>';
-  const msg=cta||pers.substring(0,120)+'…'||AVATARS_META[S.currentAvatar].greet;
+  const meta=AVATARS_META[S.currentAvatar]||{greet:'Hola, ¿en qué puedo ayudarte?'};
+  const msg=cta||pers.substring(0,120)+'…'||meta.greet;
   let i=0;
   const interval=setInterval(()=>{
     if(i<=msg.length){el.innerHTML=msg.substring(0,i)+'<span class="preview-cursor"></span>';i++;}
@@ -1782,12 +1798,28 @@ async function persistKb(){
 }
 
 /* ═══ CONVERSATIONS ══════════════════════════════════════════ */
+let _convPollInterval = null;
 async function loadConversations(){
   const endpoint=S.user?.role==='admin'?'/api/admin/conversations?pageSize=50':'/api/conversations?limit=50';
   const {ok,data}=await api('GET',endpoint);
   S.convAll=(data.conversations||data.data||[]);
   S.conversations=[...S.convAll];
   renderConvTable(S.conversations);
+  // Auto-polling cada 15 segundos mientras la pestaña esté activa
+  startConvPolling();
+}
+function startConvPolling(){
+  if(_convPollInterval) clearInterval(_convPollInterval);
+  _convPollInterval = setInterval(async ()=>{
+    if(S.currentSection !== 'conversations') return;
+    const endpoint=S.user?.role==='admin'?'/api/admin/conversations?pageSize=50':'/api/conversations?limit=50';
+    const {ok,data}=await api('GET',endpoint);
+    if(ok){
+      S.convAll=(data.conversations||data.data||[]);
+      S.conversations=[...S.convAll];
+      renderConvTable(S.conversations);
+    }
+  }, 15000);
 }
 
 function filterConversations(){
@@ -1910,8 +1942,15 @@ async function saveGlobalConfig(){
 }
 
 async function reloadMemory(){
-  const {ok}=await api('POST','/api/memory/recargar',{});
-  toast(ok?'Memoria recargada correctamente':'Error al recargar memoria',ok?'ok':'err');
+  try{
+    const controller=new AbortController();
+    const id=setTimeout(()=>controller.abort(),8000);
+    const {ok}=await api('POST','/api/memory/recargar',{});
+    clearTimeout(id);
+    toast(ok?'Memoria recargada correctamente':'Error al recargar memoria',ok?'ok':'err');
+  }catch(e){
+    toast('Error al recargar memoria: timeout','err');
+  }
 }
 
 /* ═══ USERS ═══════════════════════════════════════════════════ */

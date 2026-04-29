@@ -3,348 +3,664 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Misterio de Vid</title>
+<title>VID — Asistente Virtual</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
+/* ══ RESET ══ */
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 .design-root{position:fixed;inset:0;display:flex;flex-direction:column;}
 .hidden{display:none !important;}
 
-/* ══ DESIGN 1 — CRIPTA ══════════════════════════════════ */
-#d1{background:#080810;color:#e2e8f0;font-family:'Syne',sans-serif;}
-.d1-top{height:52px;background:#0c0c1a;border-bottom:1px solid #1a1a30;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
-.d1-logo{font-size:15px;font-weight:800;color:#7c3aed;letter-spacing:.22em;text-transform:uppercase;}
-.d1-subtitle{font-size:10px;color:#6b46c1;font-family:'Space Mono',monospace;letter-spacing:.12em;}
-.d1-indicator{margin-left:auto;display:flex;align-items:center;gap:8px;}
-.d1-dot{width:7px;height:7px;border-radius:50%;background:#7c3aed;animation:d1pulse 2s ease-in-out infinite;}
-@keyframes d1pulse{0%,100%{opacity:.4;transform:scale(.8);}50%{opacity:1;transform:scale(1);}}
-.d1-status-txt{font-family:'Space Mono',monospace;font-size:9px;color:#7c60c0;letter-spacing:.1em;}
+/* ══ TOKENS ══ */
+:root{
+  --c-bg:         #07070f;
+  --c-surface:    #0b0b18;
+  --c-border:     #1c1c2e;
+  --c-border-hi:  #2e2e50;
+  --c-accent:     #6d28d9;
+  --c-accent-dim: #4c1d95;
+  --c-text:       #c8d4ee;
+  --c-text-dim:   #5a6490;
+  --c-text-faint: #2a2a48;
+  --c-user-bg:    #110c30;
+  --c-user-bd:    #4a1fa8;
+  --c-user-txt:   #d4c8ff;
+  --c-online:     #22c55e;
+  --c-danger:     #f87171;
+
+  --k-bg:         #04080f;
+  --k-surface:    #060e18;
+  --k-border:     #0a1e2e;
+  --k-border-hi:  #0d3040;
+  --k-accent:     #0d9488;
+  --k-text:       #8ab8b0;
+  --k-text-hi:    #2dd4bf;
+  --k-text-dim:   #1a4a40;
+}
+
+/* ══════════════════════════════════════════
+   DESIGN 1 — CRIPTA
+══════════════════════════════════════════ */
+#d1{background:var(--c-bg);color:var(--c-text);font-family:'Syne',sans-serif;}
+
+/* ── Topbar ── */
+.d1-top{
+  height:48px;
+  background:var(--c-surface);
+  border-bottom:1px solid var(--c-border);
+  display:flex;align-items:center;
+  padding:0 16px;gap:10px;
+  flex-shrink:0;
+}
+.d1-mob-av{display:none;align-items:center;gap:9px;margin-right:auto;}
+.d1-mob-av-circle{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--c-surface);border:1.5px solid var(--c-accent-dim);
+  overflow:hidden;cursor:pointer;flex-shrink:0;
+}
+.d1-mob-av-circle img{width:100%;height:100%;object-fit:cover;}
+.d1-mob-av-name{font-size:12px;font-weight:700;color:var(--c-text);letter-spacing:.03em;}
+.d1-mob-av-state{font-size:9px;color:var(--c-text-dim);letter-spacing:.08em;text-transform:uppercase;font-family:'Space Mono',monospace;}
+
+/* Status pill */
+.d1-status-pill{
+  display:flex;align-items:center;gap:6px;
+  margin-left:0;
+}
+.d1-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--c-online);
+  flex-shrink:0;
+}
+.d1-status-txt{
+  font-family:'Space Mono',monospace;
+  font-size:9px;color:var(--c-text-dim);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* Logo — centrado absoluto */
+.d1-top{position:relative;}
+.d1-logo{
+  position:absolute;left:50%;transform:translateX(-50%);
+  font-size:14px;font-weight:800;
+  color:var(--c-text);letter-spacing:.3em;
+  text-transform:uppercase;pointer-events:none;z-index:1;
+}
+/* Spacer */
+.d1-topbar-spacer{flex:1;}
+/* Ocultar label de admin en mobile, dejar solo ícono */
+.d1-admin-btn-label{display:inline;}
+
+/* Admin button — topbar */
+.d1-admin-btn{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 14px;
+  border:1px solid var(--c-accent-dim);
+  border-radius:4px;
+  background:rgba(109,40,217,.1);
+  font-family:'Space Mono',monospace;
+  font-size:9px;color:#b39dff;
+  letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  transition:background .15s,border-color .15s,color .15s;
+  flex-shrink:0;
+  font-weight:700;
+}
+.d1-admin-btn:hover{background:rgba(109,40,217,.22);border-color:var(--c-accent);color:#d4b8ff;}
+.d1-admin-btn svg{flex-shrink:0;}
+.d1-admin-btn-label-mobile{display:none;}
+
+/* ── Body ── */
 .d1-body{display:flex;flex:1;overflow:hidden;position:relative;}
 
-/* sidebar — ✅ más ancho */
-.d1-sidebar{width:84px;background:#09091a;border-right:1px solid #1a1a30;display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:16px;flex-shrink:0;}
-/* ✅ avatar sidebar más grande */
-.d1-av-btn{width:60px;height:60px;border-radius:50%;background:#16103a;border:1.5px solid #6d28d9;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+/* ── Sidebar ── */
+.d1-sidebar{
+  width:56px;
+  background:var(--c-surface);
+  border-right:1px solid var(--c-border);
+  display:flex;flex-direction:column;
+  align-items:center;padding:14px 0;gap:6px;
+  flex-shrink:0;
+}
+.d1-av-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--c-bg);border:1.5px solid var(--c-border-hi);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;overflow:hidden;
+  transition:border-color .2s;
+  margin-bottom:4px;
+}
 .d1-av-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.d1-av-btn:hover{border-color:#a78bfa;box-shadow:0 0 18px rgba(109,40,217,.4);}
-.d1-sep{width:36px;height:1px;background:#1a1a30;}
-.d1-ico{width:36px;height:36px;border-radius:8px;background:#0f0f22;border:1px solid #1e1e38;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7080b8;font-size:14px;transition:all .2s;}
-.d1-ico:hover,.d1-ico.on{background:#1a0f3a;border-color:#4c1d95;color:#c4b5fd;}
-/* ✅ switch button al fondo del sidebar */
-.d1-sw-ico{width:36px;height:36px;border-radius:8px;background:#0f0f22;border:1px solid #3d2080;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9f7aea;transition:all .2s;margin-top:auto;}
-.d1-sw-ico:hover{background:#1a0f3a;border-color:#6d28d9;box-shadow:0 0 12px rgba(109,40,217,.3);}
+.d1-av-btn:hover{border-color:var(--c-accent);}
 
-/* chat */
-.d1-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.d1-msgs{flex:1;padding:20px 22px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
-.d1-msgs::-webkit-scrollbar{width:3px;}
-.d1-msgs::-webkit-scrollbar-thumb{background:#2a1f5a;border-radius:2px;}
-/* ✅ bubbles con mejor contraste */
-.d1-bubble-a{background:#0d0d22;border:1px solid #252545;border-radius:3px 14px 14px 14px;padding:10px 14px;max-width:72%;font-size:13.5px;color:#bdc8e2;line-height:1.7;}
-.d1-name{font-size:9px;font-weight:700;color:#a78bfa;letter-spacing:.18em;text-transform:uppercase;font-family:'Space Mono',monospace;display:block;margin-bottom:5px;}
-.d1-bubble-u{background:#1c1040;border:1px solid #5b21b6;border-radius:14px 3px 14px 14px;padding:10px 14px;max-width:68%;font-size:13.5px;color:#ddd6fe;line-height:1.7;align-self:flex-end;}
-.msg-text{display:block;}
+.d1-sep{width:28px;height:1px;background:var(--c-border);flex-shrink:0;}
 
-/* input */
-.d1-input-wrap{background:#09091a;border-top:1px solid #1a1a30;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.d1-field{flex:1;background:#0f0f22;border:1px solid #252545;border-radius:8px;padding:10px 14px;font-size:13px;color:#c8d4ee;font-family:'Syne',sans-serif;outline:none;transition:border-color .2s;}
-.d1-field:focus{border-color:#6d28d9;}
-.d1-field::placeholder{color:#3a3a60;}
-.d1-vbtn{width:36px;height:36px;border-radius:8px;border:1px solid #252545;background:#0f0f22;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7080b8;transition:all .2s;}
-.d1-vbtn:hover{border-color:#4c1d95;color:#a78bfa;}
-.d1-vbtn.muted{color:#f87171;border-color:#7f1d1d;}
-.d1-sbtn{width:36px;height:36px;border-radius:8px;background:#5b21b6;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .1s;}
-.d1-sbtn:hover{background:#7c3aed;}
-.d1-sbtn:active{transform:scale(.93);}
+.d1-ico{
+  width:34px;height:34px;border-radius:6px;
+  background:transparent;border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--c-text-dim);
+  transition:all .15s;flex-shrink:0;
+}
+.d1-ico:hover,.d1-ico.on{
+  background:var(--c-bg);
+  border-color:var(--c-border-hi);
+  color:var(--c-text);
+}
+.d1-sw-ico{
+  width:34px;height:34px;border-radius:6px;
+  background:transparent;border:1px solid var(--c-border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--c-text-dim);
+  transition:all .15s;margin-top:auto;
+}
+.d1-sw-ico:hover{border-color:var(--c-accent-dim);color:var(--c-text);}
 
-/* mobile tabs */
-.d1-tabs{display:none;background:#09091a;border-top:1px solid #1a1a30;flex-shrink:0;}
-.d1-tab{flex:1;padding:14px;text-align:center;font-size:10px;color:#6b7aba;border-right:1px solid #1a1a30;font-family:'Space Mono',monospace;letter-spacing:.06em;cursor:pointer;transition:color .2s;}
-.d1-tab:last-child{border-right:none;}
-.d1-tab.on{color:#c4b5fd;background:#0f0f24;}
+/* Speaking state */
+.d1-av-btn.speaking{border-color:#06b6d4;}
+.d2-av-frame.speaking{border-color:#06b6d4;}
+.d1-mob-av-circle.speaking{border-color:#06b6d4;}
+.d2-mob-av-sq.speaking{border-color:#06b6d4;}
 
-/* mobile topbar — ✅ círculo más grande */
-.d1-mob-av{display:none;align-items:center;gap:10px;margin-right:auto;}
-.d1-mob-av-circle{width:42px;height:42px;border-radius:50%;background:#16103a;border:1.5px solid #6d28d9;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;}
-.d1-mob-av-circle img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.d1-mob-av-name{font-size:12px;font-weight:700;color:#e2e8f0;letter-spacing:.04em;}
-/* ✅ legibilidad mejorada */
-.d1-mob-av-state{font-size:9px;color:#a78bfa;letter-spacing:.1em;text-transform:uppercase;font-family:'Space Mono',monospace;}
-
-/* typing */
-.typing-indicator{display:flex;align-items:center;gap:6px;padding:8px 22px;}
-.typing-dot{width:6px;height:6px;border-radius:50%;background:#7c3aed;animation:tblink 1.4s infinite;}
-.typing-dot:nth-child(2){animation-delay:.2s;}
-.typing-dot:nth-child(3){animation-delay:.4s;}
-@keyframes tblink{0%,100%{opacity:.25;}50%{opacity:1;}}
-
-/* ✅ Voice panel flotante anclado al sidebar */
+/* ── Voice panel ── */
 .d1-voice-panel{
-  position:absolute;left:92px;top:68px;z-index:500;
-  background:#0e0e20;border:1px solid #3d2080;border-radius:12px;
-  padding:16px 18px;min-width:240px;
-  box-shadow:0 8px 36px rgba(0,0,0,.75),0 0 20px rgba(109,40,217,.15);
+  position:absolute;left:62px;top:56px;z-index:500;
+  background:var(--c-surface);
+  border:1px solid var(--c-border-hi);
+  border-radius:8px;
+  padding:14px 16px;min-width:220px;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);
   display:none;
 }
 .d1-voice-panel.open{display:block;}
-/* ✅ Asegurar que el modal esté centrado */
-#avatar-unavailable-modal,
-#voice-selector-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.d1-vp-title{
+  font-size:8px;font-weight:700;
+  color:var(--c-text-dim);letter-spacing:.2em;
+  text-transform:uppercase;font-family:'Space Mono',monospace;
+  margin-bottom:10px;
 }
-.d1-vp-title{font-size:9px;font-weight:700;color:#a78bfa;letter-spacing:.18em;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:10px;}
-.d1-vp-select{width:100%;background:#080810;border:1px solid #3d2080;border-radius:6px;padding:9px 10px;font-family:'Space Mono',monospace;font-size:10px;color:#c4b5fd;outline:none;cursor:pointer;margin-bottom:10px;}
-.d1-vp-mute{width:100%;padding:9px;border:1px solid #252545;border-radius:6px;background:transparent;font-family:'Space Mono',monospace;font-size:9px;color:#8090c0;cursor:pointer;text-transform:uppercase;letter-spacing:.1em;transition:all .2s;text-align:center;}
-.d1-vp-mute:hover{border-color:#5b21b6;color:#a78bfa;}
-.d1-vp-mute.muted{color:#f87171;border-color:#7f1d1d;}
+.d1-vp-select{
+  width:100%;background:var(--c-bg);
+  border:1px solid var(--c-border-hi);border-radius:4px;
+  padding:8px 10px;font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--c-text);outline:none;cursor:pointer;margin-bottom:8px;
+}
+.d1-vp-mute{
+  width:100%;padding:8px;
+  border:1px solid var(--c-border);border-radius:4px;
+  background:transparent;font-family:'Space Mono',monospace;
+  font-size:9px;color:var(--c-text-dim);
+  cursor:pointer;text-transform:uppercase;letter-spacing:.1em;
+  transition:all .15s;text-align:center;
+}
+.d1-vp-mute:hover{border-color:var(--c-border-hi);color:var(--c-text);}
+.d1-vp-mute.muted{color:var(--c-danger);border-color:#5a1f1f;}
 
-/* ══ DESIGN 2 — KIOSK ═══════════════════════════════════ */
-#d2{background:#040e18;color:#7fa8a0;font-family:'JetBrains Mono',monospace;}
-.d2-top{height:48px;background:#040e18;border-bottom:1px solid #0d2030;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
-.d2-logo{font-size:12px;font-weight:700;color:#0d9488;letter-spacing:.28em;text-transform:uppercase;}
-.d2-sys{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:10px;color:#2a8a7a;letter-spacing:.1em;}
-.d2-blink{width:6px;height:6px;background:#0d9488;display:inline-block;animation:d2blink 1.3s step-end infinite;}
+/* ── Chat ── */
+.d1-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.d1-msgs{
+  flex:1;padding:18px 20px;
+  display:flex;flex-direction:column;gap:12px;
+  overflow-y:auto;
+}
+.d1-msgs::-webkit-scrollbar{width:2px;}
+.d1-msgs::-webkit-scrollbar-thumb{background:var(--c-border-hi);border-radius:2px;}
+
+.d1-bubble-a{
+  padding:2px 0;
+  font-size:13.5px;color:var(--c-text);line-height:1.8;
+  width:100%;
+}
+.d1-name{
+  font-size:8px;font-weight:700;
+  color:var(--c-text-dim);letter-spacing:.18em;
+  text-transform:uppercase;font-family:'Space Mono',monospace;
+  display:block;margin-bottom:5px;
+}
+.d1-bubble-u{
+  background:var(--c-user-bg);
+  border:1px solid var(--c-user-bd);
+  border-radius:12px 2px 12px 12px;
+  padding:10px 14px;max-width:70%;
+  font-size:13.5px;color:var(--c-user-txt);
+  line-height:1.7;align-self:flex-end;
+}
+.msg-text{display:block;}
+
+/* typing */
+.typing-indicator{display:flex;align-items:center;gap:5px;padding:6px 20px;}
+.typing-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--c-accent);opacity:.4;
+  animation:tblink 1.4s infinite;
+}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes tblink{0%,100%{opacity:.2;}50%{opacity:.9;}}
+
+/* ── Input area ── */
+.d1-input-wrap{
+  background:var(--c-surface);
+  border-top:1px solid var(--c-border);
+  padding:10px 14px;
+  display:flex;align-items:flex-end;gap:8px;
+  flex-shrink:0;
+}
+.d1-field{
+  flex:1;background:var(--c-bg);
+  border:1px solid var(--c-border);
+  border-radius:6px;
+  padding:9px 13px;
+  font-size:13px;color:var(--c-text);
+  font-family:'Syne',sans-serif;
+  outline:none;
+  transition:border-color .15s;
+  resize:none;
+  min-height:40px;max-height:130px;
+  overflow-y:auto;line-height:1.5;
+  display:block;
+}
+.d1-field:focus{border-color:var(--c-border-hi);}
+.d1-field::placeholder{color:var(--c-text-faint);}
+.d1-field::-webkit-scrollbar{width:2px;}
+.d1-field::-webkit-scrollbar-thumb{background:var(--c-border-hi);}
+
+.d1-vbtn{
+  width:36px;height:36px;flex-shrink:0;
+  border-radius:6px;border:1px solid var(--c-border);
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--c-text-dim);transition:all .15s;
+}
+.d1-vbtn:hover{border-color:var(--c-border-hi);color:var(--c-text);}
+.d1-vbtn.muted{color:var(--c-danger);border-color:#5a1f1f;}
+
+.d1-sbtn{
+  width:36px;height:36px;flex-shrink:0;
+  border-radius:6px;background:var(--c-accent);border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s,transform .1s;
+}
+.d1-sbtn:hover{background:#7c3aed;}
+.d1-sbtn:active{transform:scale(.93);}
+
+/* ── Mobile tabs ── */
+.d1-tabs{display:none;background:var(--c-surface);border-top:1px solid var(--c-border);flex-shrink:0;}
+.d1-tab{
+  flex:1;padding:13px;text-align:center;
+  font-size:9px;color:var(--c-text-dim);
+  border-right:1px solid var(--c-border);
+  font-family:'Space Mono',monospace;letter-spacing:.06em;
+  cursor:pointer;transition:color .15s;text-transform:uppercase;
+}
+.d1-tab:last-child{border-right:none;}
+.d1-tab.on{color:var(--c-text);background:var(--c-bg);}
+
+/* ══════════════════════════════════════════
+   DESIGN 2 — KIOSK
+══════════════════════════════════════════ */
+#d2{background:var(--k-bg);color:var(--k-text);font-family:'JetBrains Mono',monospace;}
+
+.d2-top{
+  height:44px;background:var(--k-bg);
+  border-bottom:1px solid var(--k-border);
+  display:flex;align-items:center;padding:0 18px;gap:12px;
+  flex-shrink:0;
+}
+.d2-logo{
+  font-size:11px;font-weight:700;
+  color:var(--k-accent);letter-spacing:.32em;text-transform:uppercase;
+}
+.d2-sys{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+  font-size:9px;color:var(--k-text-dim);letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.d2-blink{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--k-accent);display:inline-block;
+  animation:d2blink 1.3s step-end infinite;
+}
 @keyframes d2blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* Kiosk admin button */
+.d2-admin-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;
+  border:1px solid var(--k-border-hi);
+  border-radius:2px;
+  background:transparent;
+  font-family:'JetBrains Mono',monospace;
+  font-size:8.5px;color:var(--k-text-dim);
+  letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;
+  transition:border-color .15s,color .15s;
+  flex-shrink:0;
+}
+.d2-admin-btn:hover{border-color:var(--k-accent);color:var(--k-text-hi);}
+
 .d2-body{display:flex;flex:1;overflow:hidden;}
-/* ✅ panel izquierdo más ancho */
-.d2-left{width:180px;background:#06121e;border-right:1px solid #0d2030;display:flex;flex-direction:column;align-items:center;padding:20px 14px;gap:12px;flex-shrink:0;}
-/* ✅ avatar frame más grande */
-.d2-av-frame{width:122px;height:122px;background:#040e18;border:1px solid #0d9488;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;overflow:hidden;}
+
+/* Kiosk left panel */
+.d2-left{
+  width:170px;background:var(--k-surface);
+  border-right:1px solid var(--k-border);
+  display:flex;flex-direction:column;
+  align-items:center;padding:18px 12px;gap:10px;
+  flex-shrink:0;
+}
+.d2-av-frame{
+  width:110px;height:110px;
+  background:var(--k-bg);border:1px solid var(--k-accent);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;flex-shrink:0;
+}
 .d2-av-frame img{width:100%;height:100%;object-fit:cover;}
-.d2-av-frame::before{content:'';position:absolute;inset:-5px;border:1px dashed rgba(13,148,136,.35);pointer-events:none;}
-.d2-av-frame::after{content:'';position:absolute;inset:-11px;border:1px dashed rgba(13,148,136,.12);pointer-events:none;}
-/* ✅ texto con más contraste */
-.d2-av-name{font-size:10px;color:#2dd4bf;letter-spacing:.22em;text-transform:uppercase;text-align:center;}
-.d2-av-persona{font-size:8.5px;color:#3d9a8e;text-align:center;line-height:1.7;}
-.d2-div{width:100%;height:1px;background:#0d2030;}
-.d2-sel{width:100%;background:#040e18;border:1px solid #0d2030;border-radius:2px;padding:7px 8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#2dd4bf;outline:none;cursor:pointer;}
-.d2-cbtn{width:100%;padding:8px 0;border:1px solid #0d9488;background:transparent;font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#2dd4bf;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;border-radius:2px;transition:background .2s;}
-.d2-cbtn:hover{background:rgba(13,148,136,.12);}
-.d2-sysinfo{font-size:8px;color:#163a30;text-align:center;line-height:1.9;}
-/* ✅ switch integrado en panel kiosk */
-.d2-sw-btn{width:100%;padding:8px 0;border:1px solid #1a4a42;background:transparent;font-family:'JetBrains Mono',monospace;font-size:8px;color:#3d9a8e;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;border-radius:2px;transition:all .2s;text-align:center;margin-top:auto;}
-.d2-sw-btn:hover{border-color:#0d9488;color:#2dd4bf;}
+.d2-av-frame::before{
+  content:'';position:absolute;inset:-5px;
+  border:1px dashed rgba(13,148,136,.25);pointer-events:none;
+}
+.d2-av-name{
+  font-size:9px;color:var(--k-text-hi);
+  letter-spacing:.22em;text-transform:uppercase;text-align:center;
+}
+.d2-av-persona{
+  font-size:8px;color:var(--k-text-dim);
+  text-align:center;line-height:1.8;
+}
+.d2-div{width:100%;height:1px;background:var(--k-border);}
+.d2-sel{
+  width:100%;background:var(--k-bg);
+  border:1px solid var(--k-border);border-radius:2px;
+  padding:7px 8px;font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--k-text-hi);outline:none;cursor:pointer;
+}
+.d2-cbtn{
+  width:100%;padding:7px 0;
+  border:1px solid var(--k-border-hi);background:transparent;
+  font-family:'JetBrains Mono',monospace;font-size:8px;
+  color:var(--k-text);text-transform:uppercase;letter-spacing:.12em;
+  cursor:pointer;border-radius:2px;transition:border-color .15s,color .15s;
+}
+.d2-cbtn:hover{border-color:var(--k-accent);color:var(--k-text-hi);}
+.d2-sysinfo{
+  font-size:7.5px;color:var(--k-border-hi);
+  text-align:center;line-height:2;letter-spacing:.06em;
+}
+.d2-sw-btn{
+  width:100%;padding:7px 0;
+  border:1px solid var(--k-border-hi);background:transparent;
+  font-family:'JetBrains Mono',monospace;font-size:8px;
+  color:var(--k-text-dim);text-transform:uppercase;letter-spacing:.12em;
+  cursor:pointer;border-radius:2px;transition:all .15s;
+  text-align:center;margin-top:auto;
+}
+.d2-sw-btn:hover{border-color:var(--k-accent);color:var(--k-text-hi);}
 
-/* chat kiosk */
+/* Kiosk chat */
 .d2-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.d2-msgs{flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.d2-msgs{
+  flex:1;padding:14px 16px;
+  display:flex;flex-direction:column;gap:10px;
+  overflow-y:auto;
+}
 .d2-msgs::-webkit-scrollbar{width:2px;}
-.d2-msgs::-webkit-scrollbar-thumb{background:#0d2030;}
-/* ✅ contraste mejorado en bubbles kiosk */
-.d2-bubble-a{border-left:2px solid #0d9488;padding:6px 12px;font-size:12px;color:#a0c8c2;line-height:1.8;max-width:84%;}
-.d2-name{font-size:9px;color:#2dd4bf;font-weight:700;letter-spacing:.18em;text-transform:uppercase;display:block;margin-bottom:3px;}
-.d2-bubble-u{background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.28);padding:6px 12px;border-radius:2px;font-size:12px;color:#5eead4;align-self:flex-end;max-width:76%;line-height:1.8;}
-.d2-input-wrap{background:#06121e;border-top:1px solid #0d2030;padding:10px 18px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.d2-prompt{font-size:11px;color:#0d9488;letter-spacing:.05em;flex-shrink:0;}
-.d2-field{flex:1;background:transparent;border:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5eead4;outline:none;caret-color:#0d9488;}
-.d2-field::placeholder{color:#163a30;}
-.d2-vbtn{width:30px;height:30px;border:1px solid #0d2030;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#2a8a7a;transition:all .2s;}
-.d2-vbtn:hover{border-color:#0d9488;color:#2dd4bf;}
-.d2-vbtn.muted{color:#f87171;border-color:#7f1d1d;}
-.d2-sbtn{width:30px;height:30px;border:1px solid #0d9488;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;}
-.d2-sbtn:hover{background:rgba(13,148,136,.15);}
+.d2-msgs::-webkit-scrollbar-thumb{background:var(--k-border-hi);}
 
-/* mobile tabs kiosk */
-.d2-tabs{display:none;border-top:1px solid #0d2030;background:#040e18;flex-shrink:0;}
-.d2-tab{flex:1;padding:14px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a8a7a;border-right:1px solid #0d2030;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;}
-.d2-tab:last-child{border-right:none;}
-.d2-tab.on{color:#2dd4bf;background:rgba(13,148,136,.06);}
-/* mobile topbar kiosk — ✅ más grande */
-.d2-mob-av{display:none;align-items:center;gap:10px;margin-right:auto;}
-.d2-mob-av-sq{width:38px;height:38px;background:#040e18;border:1px solid #0d9488;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;}
-.d2-mob-av-sq img{width:100%;height:100%;object-fit:cover;}
-.d2-mob-av-name{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2dd4bf;letter-spacing:.14em;text-transform:uppercase;}
-.d2-mob-av-state{font-family:'JetBrains Mono',monospace;font-size:8px;color:#2a8a7a;}
+.d2-bubble-a{
+  border-left:1px solid var(--k-accent);
+  padding:6px 12px;font-size:12px;
+  color:var(--k-text);line-height:1.85;max-width:82%;
+}
+.d2-name{
+  font-size:8px;color:var(--k-text-dim);font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;display:block;margin-bottom:3px;
+}
+.d2-bubble-u{
+  background:rgba(13,148,136,.07);
+  border:1px solid rgba(13,148,136,.2);
+  padding:6px 12px;border-radius:1px;
+  font-size:12px;color:var(--k-text-hi);
+  align-self:flex-end;max-width:76%;line-height:1.85;
+}
+.d2-input-wrap{
+  background:var(--k-surface);border-top:1px solid var(--k-border);
+  padding:10px 16px;display:flex;align-items:center;gap:8px;
+  flex-shrink:0;
+}
+.d2-prompt{font-size:11px;color:var(--k-accent);letter-spacing:.05em;flex-shrink:0;}
+.d2-field{
+  flex:1;background:transparent;border:none;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--k-text-hi);outline:none;caret-color:var(--k-accent);
+}
+.d2-field::placeholder{color:var(--k-text-dim);}
+.d2-vbtn{
+  width:28px;height:28px;
+  border:1px solid var(--k-border);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--k-text-dim);transition:all .15s;
+}
+.d2-vbtn:hover{border-color:var(--k-accent);color:var(--k-text-hi);}
+.d2-vbtn.muted{color:var(--c-danger);border-color:#5a1f1f;}
+.d2-sbtn{
+  width:28px;height:28px;
+  border:1px solid var(--k-accent);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;
+}
+.d2-sbtn:hover{background:rgba(13,148,136,.12);}
 
-/* typing kiosk */
-.d2-typing-indicator{display:flex;align-items:center;gap:6px;padding:8px 18px;}
-.d2-typing-dot{width:6px;height:6px;background:#0d9488;animation:tblink 1.4s infinite;}
+/* Kiosk typing */
+.d2-typing-indicator{display:flex;align-items:center;gap:5px;padding:6px 16px;}
+.d2-typing-dot{
+  width:5px;height:5px;
+  background:var(--k-accent);
+  animation:tblink 1.4s infinite;
+}
 .d2-typing-dot:nth-child(2){animation-delay:.2s;}
 .d2-typing-dot:nth-child(3){animation-delay:.4s;}
 
-/* ══ OVERLAY ══════════════════════════════════════════════ */
-#t-overlay{position:fixed;inset:0;z-index:999;pointer-events:none;clip-path:circle(0% at 50% 50%);}
+/* Kiosk mobile */
+.d2-mob-av{display:none;align-items:center;gap:9px;margin-right:auto;}
+.d2-mob-av-sq{
+  width:34px;height:34px;background:var(--k-bg);
+  border:1px solid var(--k-accent);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
+}
+.d2-mob-av-sq img{width:100%;height:100%;object-fit:cover;}
+.d2-mob-av-name{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--k-text-hi);letter-spacing:.12em;text-transform:uppercase;
+}
+.d2-mob-av-state{
+  font-family:'JetBrains Mono',monospace;
+  font-size:8px;color:var(--k-text-dim);
+}
 
-/* ══ GALLERY MODAL ════════════════════════════════════════ */
-#gallery-modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;}
+/* Kiosk tabs */
+.d2-tabs{
+  display:none;border-top:1px solid var(--k-border);
+  background:var(--k-bg);flex-shrink:0;
+}
+.d2-tab{
+  flex:1;padding:13px;text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:8.5px;color:var(--k-text-dim);
+  border-right:1px solid var(--k-border);
+  text-transform:uppercase;letter-spacing:.1em;cursor:pointer;
+}
+.d2-tab:last-child{border-right:none;}
+.d2-tab.on{color:var(--k-text-hi);background:rgba(13,148,136,.05);}
+
+/* ══ TRANSITION OVERLAY ══ */
+#t-overlay{
+  position:fixed;inset:0;z-index:999;
+  pointer-events:none;clip-path:circle(0% at 50% 50%);
+}
+
+/* ══════════════════════════════════════════
+   GALLERY MODAL — redesigned
+══════════════════════════════════════════ */
+#gallery-modal{
+  position:fixed;inset:0;z-index:2000;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
 #gallery-modal.hidden{display:none;}
-#gallery-backdrop{position:absolute;inset:0;background:#000;opacity:.82;backdrop-filter:blur(4px);}
-.gallery-panel{position:relative;z-index:10;background:#0c0c1a;border:1px solid #2a1f5a;border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 0 60px rgba(124,58,237,.3);}
-.gallery-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.gallery-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#e2e8f0;}
-.gallery-close{background:none;border:none;color:#7080b8;cursor:pointer;font-size:22px;transition:color .2s;}
-.gallery-close:hover{color:#e2e8f0;}
-#avatar-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-.gallery-card{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border:1px solid #1a1a30;border-radius:12px;background:#0d0d1e;transition:all .2s;}
-.gallery-card:hover{border-color:#4c1d95;transform:translateY(-2px);}
-.gallery-card.active{border-color:#7c3aed;box-shadow:0 0 16px rgba(124,58,237,.22);}
-.gallery-card img{width:60px;height:60px;border-radius:50%;object-fit:cover;}
-.gallery-card p{font-size:11px;color:#b8c4e0;font-family:'Space Mono',monospace;}
-.gallery-card.active p{color:#c4b5fd;}
+#gallery-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.88);
+  backdrop-filter:blur(8px);
+}
+.gallery-panel{
+  position:relative;z-index:10;
+  background:var(--c-surface);
+  border:1px solid var(--c-border-hi);
+  border-radius:4px;
+  width:100%;max-width:480px;
+  box-shadow:0 24px 80px rgba(0,0,0,.8);
+  overflow:hidden;
+}
+.gallery-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px;
+  border-bottom:1px solid var(--c-border);
+}
+.gallery-title{
+  font-family:'Space Mono',monospace;
+  font-size:9px;font-weight:700;
+  color:var(--c-text-dim);letter-spacing:.22em;text-transform:uppercase;
+}
+.gallery-close{
+  background:none;border:none;
+  color:var(--c-text-dim);cursor:pointer;
+  font-size:18px;line-height:1;
+  transition:color .15s;padding:2px 6px;
+}
+.gallery-close:hover{color:var(--c-text);}
 
-/* ══ VOICE SELECTOR MODAL ═════════════════════════════════ */
-.voice-selector-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 3001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+#avatar-gallery{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;background:var(--c-border);
+  border-top:none;
 }
-.voice-selector-modal.hidden {
-  display: none;
+.gallery-card{
+  cursor:pointer;
+  display:flex;align-items:center;gap:14px;
+  padding:16px 22px;
+  background:var(--c-surface);
+  border:none;
+  transition:background .15s;
+  position:relative;
 }
-.voice-selector-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
+.gallery-card:hover{background:var(--c-bg);}
+.gallery-card.active{background:var(--c-bg);}
+.gallery-card.active::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--c-accent);
 }
-.voice-selector-panel {
-  position: relative;
-  z-index: 10;
-  background: #0c0c1a;
-  border: 1px solid #2a1f5a;
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 0 60px rgba(124, 58, 237, 0.3);
-  text-align: center;
+.gallery-card img{
+  width:52px;height:52px;border-radius:50%;
+  object-fit:cover;border:1px solid var(--c-border-hi);
+  flex-shrink:0;
 }
-.voice-selector-panel h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #e2e8f0;
-  margin-bottom: 12px;
+.gallery-card-info{display:flex;flex-direction:column;gap:4px;}
+.gallery-card p{
+  font-size:12px;font-weight:700;
+  color:var(--c-text);font-family:'Syne',sans-serif;
 }
-.voice-selector-panel p {
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: #b8c4e0;
-  line-height: 1.6;
-  margin-bottom: 16px;
+.gallery-card.active p{color:var(--c-text);}
+.gallery-badge{
+  display:inline-block;
+  font-family:'Space Mono',monospace;
+  font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;
+  border:1px solid var(--c-border-hi);
+  color:var(--c-text-dim);
 }
-.voice-selector-select {
-  width: 100%;
-  background: #080810;
-  border: 1px solid #3d2080;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: #c4b5fd;
-  outline: none;
-  cursor: pointer;
-  margin-bottom: 20px;
+.gallery-badge.soon{
+  color:#f59e0b;border-color:rgba(245,158,11,.3);
 }
-.voice-selector-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-.voice-selector-apply, .voice-selector-cancel {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.voice-selector-apply {
-  background: #5b21b6;
-  color: white;
-}
-.voice-selector-apply:hover {
-  background: #7c3aed;
-}
-.voice-selector-cancel {
-  background: transparent;
-  border: 1px solid #3d2080;
-  color: #b8c4e0;
-}
-.voice-selector-cancel:hover {
-  background: #1a0f3a;
+.gallery-badge.active-badge{
+  color:var(--c-online);border-color:rgba(34,197,94,.3);
 }
 
-/* ══ AVATAR UNAVAILABLE MODAL ═════════════════════════════ */
-.avatar-unavailable-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+/* ══════════════════════════════════════════
+   UNAVAILABLE MODAL
+══════════════════════════════════════════ */
+#unavailable-modal{
+  position:fixed;inset:0;z-index:3000;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
 }
-.avatar-unavailable-modal.hidden {
-  display: none;
+#unavailable-modal.hidden{display:none;}
+#unavailable-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.9);backdrop-filter:blur(6px);
 }
-.avatar-unavailable-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
+.unavailable-panel{
+  position:relative;z-index:10;
+  background:var(--c-surface);
+  border:1px solid var(--c-border-hi);
+  border-radius:4px;
+  width:100%;max-width:340px;
+  padding:28px 28px 24px;
+  text-align:center;
+  box-shadow:0 24px 80px rgba(0,0,0,.8);
 }
-.avatar-unavailable-panel {
-  position: relative;
-  z-index: 10;
-  background: #0c0c1a;
-  border: 1px solid #2a1f5a;
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 0 60px rgba(124, 58, 237, 0.3);
-  text-align: center;
+.unavailable-icon{
+  width:44px;height:44px;
+  border-radius:50%;
+  border:1px solid var(--c-border-hi);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;
+  color:var(--c-text-dim);
 }
-.avatar-unavailable-panel h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #e2e8f0;
-  margin-bottom: 12px;
+.unavailable-title{
+  font-size:13px;font-weight:700;
+  color:var(--c-text);letter-spacing:.04em;
+  margin-bottom:8px;
 }
-.avatar-unavailable-panel p {
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: #b8c4e0;
-  line-height: 1.6;
-  margin-bottom: 8px;
+.unavailable-desc{
+  font-family:'Space Mono',monospace;
+  font-size:10px;color:var(--c-text-dim);
+  line-height:1.8;letter-spacing:.04em;
+  margin-bottom:20px;
 }
-.avatar-unavailable-close {
-  margin-top: 20px;
-  padding: 10px 24px;
-  background: #5b21b6;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+.unavailable-back{
+  padding:9px 22px;
+  background:transparent;
+  border:1px solid var(--c-border-hi);
+  border-radius:4px;
+  font-family:'Space Mono',monospace;
+  font-size:9px;color:var(--c-text);
+  letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;transition:border-color .15s;
 }
-.avatar-unavailable-close:hover {
-  background: #7c3aed;
-}
+.unavailable-back:hover{border-color:var(--c-accent);}
 
-/* ══ RESPONSIVE ═══════════════════════════════════════════ */
+/* ══ RESPONSIVE ══ */
 @media(max-width:700px){
   .d1-sidebar{display:none;}
   .d1-tabs{display:flex;}
   .d1-mob-av{display:flex;}
-  .d1-voice-panel{left:8px;right:8px;top:auto;bottom:65px;min-width:unset;}
+  /* Admin visible en mobile con "cn flow" */
+  .d1-admin-btn{padding:6px 10px;}
+  .d1-admin-btn-label{display:none;}
+  .d1-admin-btn-label-mobile{display:inline;}
+  /* Status pill oculto en mobile (la info está en mob-av) */
+  .d1-status-pill{display:none;}
+  .d1-voice-panel{left:8px;right:8px;top:auto;bottom:60px;min-width:unset;}
+  /* Ocultar botón Chat en mobile/tablet, solo mostrar Asistente, Voz, Kiosk */
+  .d1-tabs .d1-tab:first-child{display:none;}
   .d2-left{display:none;}
   .d2-tabs{display:flex;}
   .d2-mob-av{display:flex;}
+  #avatar-gallery{grid-template-columns:1fr;}
+  .gallery-panel{max-width:100%;}
 }
 @media(min-width:701px){
   .d1-mob-av{display:none !important;}
@@ -356,52 +672,64 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 </head>
 <body>
 
-<!-- ════════════ DESIGN 1 — CRIPTA ════════════ -->
+<!-- ════════ DESIGN 1 — CRIPTA ════════ -->
 <div id="d1" class="design-root">
 
   <div class="d1-top">
+
+    <!-- Mobile: avatar + name -->
     <div class="d1-mob-av">
       <div class="d1-mob-av-circle" id="mobile-avatar-ring">
         <img id="mobile-avatar-img" src="" alt="Avatar">
       </div>
       <div>
         <div class="d1-mob-av-name" id="mobile-avatar-name">Nara01</div>
-        <div class="d1-mob-av-state" id="mobile-state-label" data-i18n="waiting">● EN ESPERA</div>
+        <div class="d1-mob-av-state" id="mobile-state-label">ONLINE</div>
       </div>
     </div>
-    <span class="d1-logo">VID</span>
-    <span class="d1-subtitle">el misterio de</span>
-    <div class="d1-indicator">
-      <span class="d1-status-txt" id="state-label" data-i18n="stateLabel">EN ESPERA</span>
+
+    <!-- Status -->
+    <div class="d1-status-pill">
       <div class="d1-dot" id="state-dot"></div>
+      <span class="d1-status-txt" id="state-label">ONLINE</span>
     </div>
+
+    <!-- Logo -->
+    <div class="d1-logo">VID</div>
+
+    <!-- Spacer -->
+    <div class="d1-topbar-spacer"></div>
+
+    <!-- Admin button — visible en desktop y mobile (solo ícono en mobile) -->
+    <a href="/admin" target="_blank" class="d1-admin-btn" title="Panel de Administración">
+      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1.5l5.5 2.7v4.5c0 2.3-2.3 4.5-5.5 4.5S1.5 11 1.5 8.7V4.2L7 1.5z"/><path d="M5 7l2 2 3-3.5"/></svg>
+      <span class="d1-admin-btn-label">ADMIN</span>
+      <span class="d1-admin-btn-label-mobile">PANEL</span>
+    </a>
+
   </div>
 
   <div class="d1-body">
 
+    <!-- Sidebar -->
     <div class="d1-sidebar">
       <div class="d1-av-btn" id="avatar-ring" title="Cambiar asistente">
         <img id="main-avatar-img" src="" alt="Avatar">
       </div>
       <div class="d1-sep"></div>
       <div class="d1-ico on" title="Chat">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2h11v8H9l-4 3V10H2z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2h10v7H8.5l-3.5 3V9H2z"/></svg>
       </div>
       <div class="d1-ico" id="sidebar-avatar-btn" title="Cambiar asistente">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7.5" cy="5.5" r="3"/><path d="M2 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="5" r="2.8"/><path d="M2 13c0-2.8 2.2-4.6 5-4.6s5 1.8 5 4.6"/></svg>
       </div>
-      <!-- ✅ Voz: abre panel con opciones de voz -->
       <div class="d1-ico" id="voice-panel-btn" title="Opciones de voz">
-        <svg id="voice-icon-on" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="5.5" y="1" width="4" height="7" rx="2"/><path d="M3 7a4.5 4.5 0 0 0 9 0M7.5 11.5v2M5.5 13.5h4"/></svg>
-        <svg id="voice-icon-off" class="hidden" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="#f87171" stroke-width="1.7" stroke-linecap="round"><rect x="5.5" y="1" width="4" height="7" rx="2"/><line x1="2" y1="2" x2="13" y2="13"/></svg>
+        <svg id="voice-icon-on" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="5" y="1" width="4" height="6.5" rx="2"/><path d="M2.5 7a4.5 4.5 0 0 0 9 0M7 11v2M5 13h4"/></svg>
+        <svg id="voice-icon-off" class="hidden" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#f87171" stroke-width="1.6" stroke-linecap="round"><rect x="5" y="1" width="4" height="6.5" rx="2"/><line x1="1.5" y1="1.5" x2="12.5" y2="12.5"/></svg>
       </div>
-      <!-- ✅ Botón de voz en kiosk (PC) -->
-      <div class="d1-ico" id="voice-toggle-btn-cripta-pc" title="Silenciar/Activar voz">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4.5" y="1" width="6" height="6.5" rx="2.5"/><path d="M2 7a5.5 5.5 0 0 0 11 0M7.5 12v1.5M5 13.5h5"/></svg>
-      </div>
-      <!-- ✅ Switch en sidebar, al fondo -->
-      <div class="d1-sw-ico" id="sw-btn-sidebar" title="Cambiar a modo Kiosk">
-        <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+      <!-- Switch at bottom -->
+      <div class="d1-sw-ico" id="sw-btn-sidebar" title="Modo Kiosk">
+        <svg width="15" height="15" viewBox="0 0 22 22" fill="none">
           <path d="M4 7.5C4 5.5 6.5 3 11 3c3.5 0 6 1.8 7 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
           <polyline points="15.5 2.5 18 7 13.5 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M18 14.5c0 2-2.5 4.5-7 4.5-3.5 0-6-1.8-7-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
@@ -410,43 +738,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
       </div>
     </div>
 
-    <!-- ✅ Panel de voz flotante junto al sidebar -->
+    <!-- Voice panel flotante -->
     <div class="d1-voice-panel" id="d1-voice-panel">
-      <div class="d1-vp-title" data-i18n="voiceOptions">Opciones de voz</div>
+      <div class="d1-vp-title">Opciones de voz</div>
       <select class="d1-vp-select" id="voice-selector-panel"></select>
-      <button class="d1-vp-mute" id="voice-mute-btn" data-i18n="mute">🔇 Silenciar</button>
-      <div style="margin-top: 10px; font-size: 9px; color: #7080b8; text-align: center;" data-i18n="voicePanelHint">
-        También puedes usar el modal para ver todas las voces
-      </div>
+      <button class="d1-vp-mute" id="voice-mute-btn">Silenciar</button>
     </div>
 
+    <!-- Chat -->
     <div class="d1-chat">
       <div class="d1-msgs" id="chat-history-cripta"></div>
       <div id="typing-indicator-cripta" class="typing-indicator hidden">
         <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
       </div>
       <div class="d1-input-wrap">
-        <input class="d1-field" id="chat-input-cripta" type="text" placeholder="Escribe un mensaje…" autocomplete="off" data-i18n="placeholder">
+        <textarea
+          class="d1-field"
+          id="chat-input-cripta"
+          placeholder="Escribe un mensaje…"
+          rows="1"
+          autocomplete="off"
+        ></textarea>
         <div class="d1-vbtn" id="voice-toggle-btn-cripta" title="Silenciar voz">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4.5" y="1" width="5" height="6.5" rx="2.5"/><path d="M2 7a5 5 0 0 0 10 0M7 12v1.5M5 13.5h4"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="5" y="1" width="4" height="6.5" rx="2"/><path d="M2.5 7a4.5 4.5 0 0 0 9 0M7 11v2M5 13h4"/></svg>
         </div>
         <button class="d1-sbtn" id="send-btn-cripta">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="12" x2="12" y2="1"/><polyline points="4 1 12 1 12 9"/></svg>
         </button>
       </div>
     </div>
+
   </div>
 
   <div class="d1-tabs">
-    <div class="d1-tab on" data-i18n="chat">Chat</div>
-    <div class="d1-tab d1-mob-tab-asistente" data-i18n="assistant">Asistente</div>
-    <div class="d1-tab d1-mob-tab-voz" data-i18n="voice">Voz</div>
+    <div class="d1-tab on">Chat</div>
+    <div class="d1-tab d1-mob-tab-asistente">Asistente</div>
+    <div class="d1-tab d1-mob-tab-voz">Voz</div>
     <div class="d1-tab d1-mob-tab-switch">⇄ Kiosk</div>
   </div>
 </div>
 
 
-<!-- ════════════ DESIGN 2 — KIOSK ════════════ -->
+<!-- ════════ DESIGN 2 — KIOSK ════════ -->
 <div id="d2" class="design-root" style="display:none;">
 
   <div class="d2-top">
@@ -459,8 +792,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
         <div class="d2-mob-av-state">SYS_OK</div>
       </div>
     </div>
-    <span class="d2-logo">El Misterio de Vid</span>
-    <div class="d2-sys"><span class="d2-blink"></span><span data-i18n="sysOk">SYS_OK &gt;&gt; ONLINE</span></div>
+    <span class="d2-logo">VID SYSTEM</span>
+    <div class="d2-sys"><span class="d2-blink"></span>SYS_OK &gt;&gt; ONLINE</div>
+    <a href="/admin" target="_blank" class="d2-admin-btn" title="Panel de Administración">
+      <svg width="9" height="9" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 1.5l5.5 2.7v4.5c0 2.3-2.3 4.5-5.5 4.5S1.5 11 1.5 8.7V4.2L7 1.5z"/></svg>
+      ADMIN
+    </a>
   </div>
 
   <div class="d2-body">
@@ -472,9 +809,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
       <div class="d2-av-persona">Directo, amigable<br>y eficiente</div>
       <div class="d2-div"></div>
       <select class="d2-sel" id="voice-selector-kiosk"></select>
-      <button class="d2-cbtn" id="change-assistant-btn-kiosk" data-i18n="selectAssistant">Cambiar asistente</button>
-      <div class="d2-sysinfo">v2.0.4<br>[SECURE_CONN]<br>El Misterio de Vid</div>
-      <!-- ✅ Switch integrado en panel izquierdo kiosk -->
+      <button class="d2-cbtn" id="change-assistant-btn-kiosk">Cambiar asistente</button>
+      <div class="d2-sysinfo">v2.0.4<br>[SECURE_CONN]<br>VID SYSTEM</div>
       <button class="d2-sw-btn" id="sw-btn-kiosk-panel">⇄ Modo Cripta</button>
     </div>
 
@@ -484,10 +820,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
         <span class="d2-typing-dot"></span><span class="d2-typing-dot"></span><span class="d2-typing-dot"></span>
       </div>
       <div class="d2-input-wrap">
-        <span class="d2-prompt" data-i18n="inputPrompt">input&gt;</span>
-        <input class="d2-field" id="chat-input-kiosk" type="text" placeholder="escribir comando..." autocomplete="off" data-i18n="placeholder">
+        <span class="d2-prompt">input&gt;</span>
+        <input class="d2-field" id="chat-input-kiosk" type="text" placeholder="escribir comando..." autocomplete="off">
         <div class="d2-vbtn" id="voice-toggle-btn-kiosk" title="Silenciar voz">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="1" width="5" height="5.5" rx="2.5"/><path d="M1.5 6a4.5 4.5 0 0 0 9 0M6 10v1.5M4 11.5h4"/></svg>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="1" width="5" height="5.5" rx="2.5"/><path d="M1.5 6a4.5 4.5 0 0 0 9 0M6 10v1.5M4 11.5h4"/></svg>
         </div>
         <button class="d2-sbtn" id="send-btn-kiosk">
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="10" x2="10" y2="1"/><polyline points="3.5 1 10 1 10 7.5"/></svg>
@@ -497,9 +833,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
   </div>
 
   <div class="d2-tabs">
-    <div class="d2-tab on" data-i18n="chat">Chat</div>
-    <div class="d2-tab d2-mob-tab-avatar" data-i18n="avatar">Avatar</div>
-    <div class="d2-tab d2-mob-tab-voz" data-i18n="voice">Voz</div>
+    <div class="d2-tab on">Chat</div>
+    <div class="d2-tab d2-mob-tab-avatar">Avatar</div>
     <div class="d2-tab d2-mob-tab-switch">⇄ Cripta</div>
   </div>
 </div>
@@ -508,309 +843,213 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 <!-- ════════ TRANSITION OVERLAY ════════ -->
 <div id="t-overlay"></div>
 
-<!-- ════════ AVATAR GALLERY MODAL ════════ -->
+<!-- ════════ GALLERY MODAL — redesigned ════════ -->
 <div id="gallery-modal" class="hidden">
   <div id="gallery-backdrop"></div>
   <div class="gallery-panel">
     <div class="gallery-header">
-      <h3 class="gallery-title" data-i18n="galleryTitle">Elige tu asistente</h3>
+      <span class="gallery-title">Seleccionar asistente</span>
       <button id="close-gallery-btn" class="gallery-close">&times;</button>
     </div>
     <div id="avatar-gallery"></div>
   </div>
 </div>
 
+<!-- ════════ UNAVAILABLE MODAL ════════ -->
+<div id="unavailable-modal" class="hidden">
+  <div id="unavailable-backdrop"></div>
+  <div class="unavailable-panel">
+    <div class="unavailable-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><line x1="10" y1="6" x2="10" y2="10"/><circle cx="10" cy="13.5" r=".5" fill="currentColor"/></svg>
+    </div>
+    <div class="unavailable-title">Asistente no disponible</div>
+    <div class="unavailable-desc">
+      Este avatar aún no tiene<br>animaciones integradas.<br>Estará disponible pronto.
+    </div>
+    <button class="unavailable-back" id="unavailable-back-btn">Volver</button>
+  </div>
+</div>
+
 <select id="mobile-voice-selector" style="display:none;"></select>
 
-<!-- Modal para avatares no disponibles -->
-<div id="avatar-unavailable-modal" class="hidden">
-  <div id="avatar-unavailable-backdrop" class="avatar-unavailable-backdrop"></div>
-  <div class="avatar-unavailable-panel">
-    <h3 data-i18n="avatarDev">Avatar en desarrollo</h3>
-    <p id="avatar-unavailable-message"></p>
-    <p data-i18n="selectAnother">Por favor, selecciona otro avatar.</p>
-    <button id="avatar-unavailable-close" class="avatar-unavailable-close" data-i18n="understood">Entendido</button>
-  </div>
-</div>
-
-<!-- Modal para selector de voces -->
-<div id="voice-selector-modal" class="hidden">
-  <div id="voice-selector-backdrop" class="voice-selector-backdrop"></div>
-  <div class="voice-selector-panel">
-    <h3 data-i18n="modalTitle">Seleccionar voz</h3>
-    <p data-i18n="modalDesc">Elige una voz para el avatar actual.</p>
-    <select id="voice-selector-modal-select" class="voice-selector-select"></select>
-    <div class="voice-selector-buttons">
-      <button id="voice-selector-apply" class="voice-selector-apply" data-i18n="apply">Aplicar</button>
-      <button id="voice-selector-cancel" class="voice-selector-cancel" data-i18n="cancel">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ✅ Scripts: orden correcto -->
+<!-- Scripts externos -->
 <script src="js/storage.js"></script>
-<script src="js/avatar-unified.js"></script>
+<script src="js/avatar.js"></script>
 <script src="js/voice.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/main.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script>
-/* ═══ i18n — detección automática de idioma ═══ */
-(function(){
-  const lang = (navigator.language || 'es').slice(0,2);
-  const locale = ['en','fr'].includes(lang) ? lang : 'es';
-  if (locale === 'es') return;
-  document.documentElement.lang = locale;
-  const _ = {
-    en: {
-      placeholder:'Type a message…',
-      waiting:'● STANDBY',
-      stateLabel:'STANDBY',
-      sysOk:'SYS_OK >> ONLINE',
-      inputPrompt:'input>',
-      chat:'Chat',
-      assistant:'Assistant',
-      voice:'Voice',
-      switchCripta:'⇄ Crypt',
-      switchKiosk:'⇄ Kiosk',
-      voiceOptions:'Voice options',
-      mute:'🔇 Mute',
-      modalTitle:'Select voice',
-      modalDesc:'Choose a voice for the current avatar.',
-      apply:'Apply',
-      cancel:'Cancel',
-      selectAssistant:'Choose your assistant',
-      noVoices:'No voices available',
-      avatarDev:'Avatar in development',
-      selectAnother:'Please select another avatar.',
-      understood:'Got it',
-      errorMsg:'Sorry, an error occurred. Try again.',
-      galleryTitle:'Choose your assistant',
-      voicePanelHint:'You can also use the modal to see all voices',
-      avatar:'Avatar',
-      kioskPlaceholder:'type command...',
-    },
-    fr: {
-      placeholder:'Écrivez un message…',
-      waiting:'● EN ATTENTE',
-      stateLabel:'EN ATTENTE',
-      sysOk:'SYS_OK >> EN LIGNE',
-      inputPrompt:'entrée>',
-      chat:'Chat',
-      assistant:'Assistant',
-      voice:'Voix',
-      switchCripta:'⇄ Crypte',
-      switchKiosk:'⇄ Kiosque',
-      voiceOptions:'Options vocales',
-      mute:'🔇 Muet',
-      modalTitle:'Choisir une voix',
-      modalDesc:'Choisissez une voix pour l\'avatar actuel.',
-      apply:'Appliquer',
-      cancel:'Annuler',
-      selectAssistant:'Choisissez votre assistant',
-      noVoices:'Aucune voix disponible',
-      avatarDev:'Avatar en développement',
-      selectAnother:'Veuillez sélectionner un autre avatar.',
-      understood:'Compris',
-      errorMsg:'Désolé, une erreur est survenue. Réessayez.',
-      galleryTitle:'Choisissez votre assistant',
-      voicePanelHint:'Vous pouvez aussi utiliser le modal pour voir toutes les voix',
-      avatar:'Avatar',
-      kioskPlaceholder:'tapez une commande...',
-    }
-  };
-  const t = _[locale] || {};
-  function tr(key) { return t[key] || key; }
-  // Apply translations
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.dataset.i18n;
-    if (t[key]) {
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-        el.placeholder = t[key];
-      } else if (el.tagName === 'SPAN' && el.closest('.d1-mob-av-state, #state-label')) {
-        el.textContent = t[key];
-      } else {
-        el.textContent = t[key];
-      }
-    }
-  });
-  // Translate bubble names too via dataset
-  document.querySelectorAll('.d1-name, .d2-name').forEach(el => {
-    if (el.dataset.i18n === 'assistant') el.textContent = tr('assistant');
-  });
-  // Kiosk specific placeholder
-  const kioskInput = document.getElementById('chat-input-kiosk');
-  if (kioskInput && t.kioskPlaceholder) kioskInput.placeholder = t.kioskPlaceholder;
-})();
-</script>
-<script>
-/* ── Switch (sidebar cripta + panel kiosk + tabs mobile) ── */
-const d1El = document.getElementById('d1');
-const d2El = document.getElementById('d2');
-const overlay = document.getElementById('t-overlay');
-let current=1, busy=false;
 
-function getOrigin(el){
-  const r=el.getBoundingClientRect();
-  return{x:((r.left+r.width/2)/window.innerWidth*100).toFixed(2),y:((r.top+r.height/2)/window.innerHeight*100).toFixed(2)};
-}
-function doSwitch(originEl){
-  if(busy)return;busy=true;
-  const toD2=current===1;
-  const{x,y}=getOrigin(originEl);
-  overlay.style.background=toD2?'#040e18':'#080810';
-  overlay.style.clipPath=`circle(0% at ${x}% ${y}%)`;
-  overlay.style.pointerEvents='all';
-  gsap.to(overlay,{duration:.55,ease:'power3.in',clipPath:`circle(160% at ${x}% ${y}%)`,
-    onComplete:()=>{
-      if(toD2){d1El.style.display='none';d2El.style.display='flex';current=2;if(typeof window.updateActiveChat==='function')window.updateActiveChat('kiosk');if(typeof window.syncAvatars==='function')window.syncAvatars();}
-      else{d2El.style.display='none';d1El.style.display='flex';current=1;if(typeof window.updateActiveChat==='function')window.updateActiveChat('cripta');if(typeof window.syncAvatars==='function')window.syncAvatars();}
-      gsap.to(overlay,{duration:.5,ease:'power3.out',clipPath:`circle(0% at ${x}% ${y}%)`,onComplete:()=>{overlay.style.pointerEvents='none';busy=false;}});
+<script>
+/* ── Textarea auto-resize ── */
+const chatInputCripta = document.getElementById('chat-input-cripta');
+if (chatInputCripta) {
+  chatInputCripta.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 130) + 'px';
+  });
+  // Send on Enter (Shift+Enter = new line)
+  chatInputCripta.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('send-btn-cripta')?.click();
+      setTimeout(() => { this.style.height = 'auto'; }, 50);
     }
   });
 }
-document.getElementById('sw-btn-sidebar')?.addEventListener('click',function(){doSwitch(this);});
-document.getElementById('sw-btn-kiosk-panel')?.addEventListener('click',function(){doSwitch(this);});
-document.querySelector('.d1-mob-tab-switch')?.addEventListener('click',function(){doSwitch(this);});
-document.querySelector('.d2-mob-tab-switch')?.addEventListener('click',function(){doSwitch(this);});
 
-/* ── Voice panel (botón voz en sidebar) ── */
-const voicePanelBtn=document.getElementById('voice-panel-btn');
-const voicePanel=document.getElementById('d1-voice-panel');
-voicePanelBtn?.addEventListener('click',e=>{
+/* ── Voice panel toggle ── */
+const voicePanelBtn = document.getElementById('voice-panel-btn');
+const voicePanel    = document.getElementById('d1-voice-panel');
+voicePanelBtn?.addEventListener('click', e => {
   e.stopPropagation();
-  // Poblar el selector de voces en el panel flotante
-  const selector = document.getElementById('voice-selector-panel');
-  if (selector) {
-    const avatar = window.AVATARS?.[window.currentAvatarId];
-    if (avatar) {
-      selector.innerHTML = '';
-      if (avatar.voices.length > 0) {
-        avatar.voices.forEach(voice => {
-          const option = document.createElement('option');
-          option.value = voice.id;
-          option.textContent = voice.name;
-          if (voice.id === getActiveVoiceId()) {
-            option.selected = true;
-          }
-          selector.appendChild(option);
-        });
-        selector.disabled = false;
-      } else {
-        selector.innerHTML = '<option value="">— Sin voz —</option>';
-        selector.disabled = true;
-      }
-    }
-  }
-  
-  // Abrir modal de selector de voces
-  openVoiceSelectorModal();
-  // También mantener el panel flotante visible para consistencia
-  voicePanel.classList.toggle('open');
-  voicePanelBtn.classList.toggle('on', voicePanel.classList.contains('open'));
+  const isOpen = voicePanel.classList.toggle('open');
+  voicePanelBtn.classList.toggle('on', isOpen);
 });
-document.addEventListener('click',e=>{
-  if(voicePanel?.classList.contains('open')&&!voicePanel.contains(e.target)&&e.target!==voicePanelBtn){
+document.addEventListener('click', e => {
+  if (voicePanel?.classList.contains('open') &&
+      !voicePanel.contains(e.target) &&
+      e.target !== voicePanelBtn) {
     voicePanel.classList.remove('open');
     voicePanelBtn.classList.remove('on');
   }
 });
 
-/* Sync voice-selector-panel → kiosk selector */
-document.getElementById('voice-selector-panel')?.addEventListener('change',e=>{
-  const k=document.getElementById('voice-selector-kiosk');
-  const m=document.getElementById('mobile-voice-selector');
-  if(k)k.value=e.target.value;if(m)m.value=e.target.value;
+/* Sync voice selectors */
+document.getElementById('voice-selector-panel')?.addEventListener('change', e => {
+  const k = document.getElementById('voice-selector-kiosk');
+  const m = document.getElementById('mobile-voice-selector');
+  if (k) k.value = e.target.value;
+  if (m) m.value = e.target.value;
 });
 
-/* Botón de voz en kiosk (ícono) */
-document.getElementById('voice-toggle-btn-kiosk')?.addEventListener('click',()=>{
-  openVoiceSelectorModal();
+/* Mute button in voice panel */
+document.getElementById('voice-mute-btn')?.addEventListener('click', () => {
+  if (typeof window._voiceToggleExternal === 'function') window._voiceToggleExternal();
 });
 
-/* Botón mute en panel voz */
-document.getElementById('voice-mute-btn')?.addEventListener('click',()=>{
-  if(typeof window._voiceToggleExternal==='function')window._voiceToggleExternal();
-});
-
-/* Mobile tab voz → abre modal de selector de voces */
-document.querySelector('.d1-mob-tab-voz')?.addEventListener('click',()=>{
-  openVoiceSelectorModal();
-});
-/* Mobile tab voz en kiosk */
-document.querySelector('.d2-mob-tab-voz')?.addEventListener('click',()=>{
-  openVoiceSelectorModal();
-});
-
-/* Botón de voz en cripta (PC) */
-document.getElementById('voice-toggle-btn-cripta-pc')?.addEventListener('click',()=>{
-  if (typeof window._voiceToggleExternal === 'function') {
-    window._voiceToggleExternal();
+/* Mobile tab voz */
+document.querySelector('.d1-mob-tab-voz')?.addEventListener('click', function() {
+  if (voicePanel) {
+    const isOpen = voicePanel.classList.toggle('open');
+    this.classList.toggle('on', isOpen);
   }
 });
 
-/* Función para abrir el modal de selector de voces */
-function openVoiceSelectorModal() {
-  const modal = document.getElementById('voice-selector-modal');
-  const select = document.getElementById('voice-selector-modal-select');
-  const applyBtn = document.getElementById('voice-selector-apply');
-  const cancelBtn = document.getElementById('voice-selector-cancel');
-  const backdrop = document.getElementById('voice-selector-backdrop');
-  
-  if (!modal || !select) return;
-  
-  // Poblar el selector con las voces del avatar actual
-  const avatar = AVATARS[window.currentAvatarId];
-  select.innerHTML = '';
-  if (avatar && avatar.voices.length > 0) {
-    avatar.voices.forEach(voice => {
-      const option = document.createElement('option');
-      option.value = voice.id;
-      option.textContent = voice.name;
-      if (voice.id === getActiveVoiceId()) {
-        option.selected = true;
-      }
-      select.appendChild(option);
-    });
-  } else {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No hay voces disponibles';
-    select.appendChild(option);
-    select.disabled = true;
+/* ── Unavailable modal (vid / ava03) ── */
+const unavailableAvatars = ['vid', 'ava03'];
+const unavailableModal   = document.getElementById('unavailable-modal');
+const unavailableBackBtn = document.getElementById('unavailable-back-btn');
+
+// Intercept gallery card clicks at capture phase
+document.getElementById('gallery-modal')?.addEventListener('click', e => {
+  const card = e.target.closest('.gallery-card');
+  if (!card) return;
+
+  // Try data attributes first, then check p text
+  const avatarId = (card.dataset.avatarId || card.dataset.id || card.dataset.avatar || '').toLowerCase();
+  const labelText = (card.querySelector('p')?.textContent || '').toLowerCase().replace(/\s/g, '');
+
+  const isUnavailable = unavailableAvatars.some(a =>
+    avatarId.includes(a) || labelText.includes(a)
+  );
+
+  if (isUnavailable) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    // Close gallery first, then show unavailable
+    document.getElementById('gallery-modal').classList.add('hidden');
+    unavailableModal?.classList.remove('hidden');
   }
-  
-  modal.classList.remove('hidden');
-  
-  // Configurar eventos
-  const closeModal = () => {
-    modal.classList.add('hidden');
-  };
-  
-  applyBtn?.addEventListener('click', () => {
-    const selectedVoice = select.value;
-    if (selectedVoice) {
-      // Actualizar todos los selectores de voz
-      ['voice-selector-panel', 'voice-selector-kiosk', 'mobile-voice-selector'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = selectedVoice;
-      });
-      // Guardar preferencia
-      if (typeof saveAvatarPreference === 'function') {
-        saveAvatarPreference(window.currentAvatarId, selectedVoice);
-      }
-    }
-    closeModal();
+}, true);
+
+unavailableBackBtn?.addEventListener('click', () => {
+  unavailableModal?.classList.add('hidden');
+});
+document.getElementById('unavailable-backdrop')?.addEventListener('click', () => {
+  unavailableModal?.classList.add('hidden');
+});
+
+/* ── Mobile keyboard: hide tabs when keyboard open ── */
+(function() {
+  if (!window.visualViewport) return;
+
+  const d1Tabs    = document.querySelector('.d1-tabs');
+  const d2Tabs    = document.querySelector('.d2-tabs');
+  const d1Input   = document.querySelector('.d1-input-wrap');
+  const d2Input   = document.querySelector('.d2-input-wrap');
+
+  let baseHeight = window.visualViewport.height;
+
+  // Give DOM time to settle before capturing baseline
+  setTimeout(() => { baseHeight = window.visualViewport.height; }, 500);
+
+  window.visualViewport.addEventListener('resize', () => {
+    const currentH = window.visualViewport.height;
+    const keyboardOpen = currentH < baseHeight * 0.8;
+
+    if (d1Tabs)  d1Tabs.style.display  = keyboardOpen ? 'none' : '';
+    if (d2Tabs)  d2Tabs.style.display  = keyboardOpen ? 'none' : '';
   });
-  
-  cancelBtn?.addEventListener('click', closeModal);
-  backdrop?.addEventListener('click', closeModal);
-}
 
-/* ── Tabs ── */
-document.querySelectorAll('.d1-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.d1-tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');}));
-document.querySelectorAll('.d2-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.d2-tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');}));
-document.querySelectorAll('.d1-ico:not(#voice-panel-btn)').forEach(i=>i.addEventListener('click',()=>{document.querySelectorAll('.d1-ico:not(#voice-panel-btn)').forEach(x=>x.classList.remove('on'));i.classList.add('on');}));
+  // Reset baseline when orientation changes
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => { baseHeight = window.visualViewport.height; }, 400);
+  });
+})();
+
+/* ── Switch Cripta ↔ Kiosk ── */
+(function() {
+  const d1 = document.getElementById('d1');
+  const d2 = document.getElementById('d2');
+  const overlay = document.getElementById('t-overlay');
+
+  function switchTo(target) {
+    if (!d1 || !d2) return;
+
+    // Notificar al chat del layout activo
+    if (typeof window.updateActiveChat === 'function') {
+      window.updateActiveChat(target === 'd2' ? 'kiosk' : 'cripta');
+    }
+
+    // Animación simple con overlay si GSAP disponible
+    if (typeof gsap !== 'undefined' && overlay) {
+      const fromD = target === 'd2' ? d1 : d2;
+      const toD   = target === 'd2' ? d2 : d1;
+      const color = target === 'd2' ? '#040e18' : '#07070f';
+
+      gsap.set(overlay, { background: color, pointerEvents: 'all' });
+      gsap.to(overlay, {
+        clipPath: 'circle(150% at 50% 50%)', duration: .35, ease: 'power2.in',
+        onComplete: () => {
+          fromD.style.display = 'none';
+          toD.style.display   = 'flex';
+          gsap.to(overlay, {
+            clipPath: 'circle(0% at 50% 50%)', duration: .3, ease: 'power2.out', delay: .05,
+            onComplete: () => { gsap.set(overlay, { pointerEvents: 'none' }); }
+          });
+        }
+      });
+    } else {
+      // Sin GSAP: cambio directo
+      if (target === 'd2') { d1.style.display = 'none'; d2.style.display = 'flex'; }
+      else                  { d2.style.display = 'none'; d1.style.display = 'flex'; }
+    }
+  }
+
+  // Botones Cripta → Kiosk
+  document.getElementById('sw-btn-sidebar')?.addEventListener('click', () => switchTo('d2'));
+  document.querySelector('.d1-mob-tab-switch')?.addEventListener('click', () => switchTo('d2'));
+
+  // Botones Kiosk → Cripta
+  document.getElementById('sw-btn-kiosk-panel')?.addEventListener('click', () => switchTo('d1'));
+  document.querySelector('.d2-mob-tab-switch')?.addEventListener('click', () => switchTo('d1'));
+})();
+
+/* ── Gallery close on backdrop click ── */
+document.getElementById('gallery-backdrop')?.addEventListener('click', () => {
+  document.getElementById('gallery-modal').classList.add('hidden');
+});
 </script>
 </body>
 </html>
