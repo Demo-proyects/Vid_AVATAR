@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VID · Panel de Administración</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── VARIABLES ─────────────────────────────────────────── */
+:root{
+  --bg:#0f1117;--bg2:#161b27;--bg3:#1c2235;--bg4:#232b40;
+  --card:rgba(22,27,39,.85);--card-h:rgba(28,34,53,.95);
+  --border:rgba(255,255,255,.07);--border-a:rgba(99,130,201,.22);
+  --a:#3b6fd4;--a2:#4f82e0;--a3:#7aaaf5;--a-glow:rgba(59,111,212,.18);
+  --gold:#d4a843;--gold-glow:rgba(212,168,67,.15);
+  --t1:#e8ecf4;--t2:#8b96b0;--t3:#5c6880;--t4:#374056;
+  --ok:#22c55e;--err:#ef4444;--warn:#d4a843;--info:#3b6fd4;
+  --side:248px;--head:58px;
+  --r:5px;--r2:8px;--r3:12px;
+  --font:'Inter',system-ui,sans-serif;
+  --font-h:'Inter',system-ui,sans-serif;
+  --lr:#dc2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);line-height:1.5;-webkit-font-smoothing:antialiased;font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(59,111,212,.25);border-radius:10px}
+a{color:var(--a3);text-decoration:none}
+button{cursor:pointer;font-family:inherit;font-size:inherit}
+
+/* ─── LAYOUT ────────────────────────────────────────────── */
+.layout{display:flex;height:100vh;width:100vw}
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* ─── SIDEBAR ───────────────────────────────────────────── */
+.side{width:var(--side);min-width:var(--side);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;position:relative;transition:width .25s}
+.side-logo{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;min-width:32px;background:var(--a);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:12px;color:#fff;letter-spacing:-.5px}
+.logo-text h1{font-family:var(--font-h);font-size:13.5px;font-weight:600;letter-spacing:-.2px;color:var(--t1)}
+.logo-text p{font-size:10px;color:var(--t3);letter-spacing:.3px;text-transform:uppercase;font-weight:500;margin-top:1px}
+.side-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-group{margin-bottom:20px}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t4);padding:0 10px;margin-bottom:4px;font-weight:600}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r2);color:var(--t3);cursor:pointer;transition:all .12s ease;font-size:13px;font-weight:450;border:1px solid transparent;background:transparent;width:100%;text-align:left;margin-bottom:1px;white-space:nowrap;overflow:hidden}
+.ni:hover{background:rgba(59,111,212,.08);color:var(--t1)}
+.ni.active{background:rgba(59,111,212,.13);color:var(--a3);border-color:rgba(59,111,212,.2)}
+.ni .ni-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;opacity:.8}
+.ni .ni-badge{margin-left:auto;font-size:9.5px;font-weight:600;background:rgba(59,111,212,.12);color:var(--a3);padding:1px 6px;border-radius:4px;border:1px solid rgba(59,111,212,.2);letter-spacing:.3px}
+.ni .ni-badge.admin-only{background:rgba(212,168,67,.1);color:var(--gold);border-color:rgba(212,168,67,.2)}
+.ni .ni-badge.new{background:rgba(34,197,94,.1);color:var(--ok);border-color:rgba(34,197,94,.2)}
+.side-foot{padding:10px 8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.status-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t3);padding:5px 10px;border-radius:var(--r);background:rgba(255,255,255,.02);border:1px solid var(--border)}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--t4)}
+.status-dot.ok{background:var(--ok);box-shadow:0 0 5px rgba(34,197,94,.4)}
+.status-dot.err{background:var(--err);box-shadow:0 0 5px rgba(239,68,68,.4)}
+.brand-credit{font-size:9px;color:var(--t4);text-align:center;padding:6px 0 2px;letter-spacing:.3px}
+.brand-credit span{color:var(--t3);font-weight:500}
+
+/* ─── HEADER ────────────────────────────────────────────── */
+.head{height:var(--head);min-height:var(--head);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;z-index:50;position:relative}
+.head-title{font-size:14px;font-weight:600;color:var(--t1);flex:1;letter-spacing:-.2px}
+.head-title span{color:var(--t3);font-weight:400;font-size:12px;margin-left:8px}
+.head-actions{display:flex;align-items:center;gap:8px}
+.limit-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:5px;padding:4px 10px}
+.limit-badge .limit-num{font-weight:600;color:var(--t1);font-family:'IBM Plex Mono',monospace}
+.limit-badge .limit-bar{width:44px;height:2px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.limit-bar-fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--a2));border-radius:2px;transition:width .4s}
+.limit-bar-fill.warn{background:linear-gradient(90deg,var(--warn),var(--err))}
+.btn-auth{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:6px 12px;border-radius:5px;border:1px solid var(--border-a);background:rgba(59,111,212,.07);color:var(--a3);transition:all .12s;cursor:pointer}
+.btn-auth:hover{background:rgba(59,111,212,.13);border-color:rgba(59,111,212,.35)}
+.user-chip{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--a);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+.user-name{font-weight:500;color:var(--t1)}
+.user-role{font-size:10px;color:var(--t3)}
+.btn-logout{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:11px;color:var(--t3);transition:all .12s}
+.btn-logout:hover{border-color:rgba(239,68,68,.4);color:var(--err)}
+
+/* ─── CONTENT ───────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:24px 26px}
+.section{display:none;animation:fadeIn .2s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ─── SECTION HEADER ────────────────────────────────────── */
+.sec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
+.sec-title h2{font-size:18px;font-weight:600;color:var(--t1);letter-spacing:-.3px}
+.sec-title p{font-size:12px;color:var(--t3);margin-top:2px}
+.sec-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+/* ─── CARDS ─────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);padding:18px;transition:border-color .15s}
+.card:hover{border-color:rgba(59,111,212,.2)}
+.card-title{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title .ct-ico{font-size:13px;opacity:.7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ─── STAT CARDS ────────────────────────────────────────── */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);padding:16px 18px;transition:all .15s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--line-color,var(--a));opacity:.5}
+.stat-card:hover{border-color:rgba(59,111,212,.2)}
+.stat-ico{font-size:18px;margin-bottom:10px;display:block;opacity:.8}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--t1);line-height:1;margin-bottom:4px;letter-spacing:-1px}
+.stat-label{font-size:11px;color:var(--t3);font-weight:400}
+.stat-trend{font-size:11px;color:var(--ok);margin-top:5px;display:flex;align-items:center;gap:4px}
+
+/* ─── FORM ELEMENTS ─────────────────────────────────────── */
+.form-row{margin-bottom:16px}
+.form-row.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+label{display:block;font-size:11.5px;font-weight:500;color:var(--t2);margin-bottom:5px;letter-spacing:.1px}
+label .lbl-hint{font-weight:400;color:var(--t3);font-size:11px}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=tel],select,textarea{width:100%;padding:8px 11px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r2);color:var(--t1);font-family:var(--font);font-size:13px;transition:border-color .12s,box-shadow .12s;outline:none;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--a2);box-shadow:0 0 0 3px rgba(59,111,212,.12)}
+input::placeholder,textarea::placeholder{color:var(--t4)}
+select option{background:var(--bg3);color:var(--t1)}
+textarea{min-height:90px;line-height:1.55}
+.char-counter{font-size:10.5px;color:var(--t4);text-align:right;margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.char-counter.warn{color:var(--warn)}
+.char-counter.over{color:var(--err)}
+.input-hint{font-size:11px;color:var(--t3);margin-top:4px;line-height:1.4}
+.token-bar{margin-top:8px}
+.token-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--t4);margin-bottom:4px}
+.token-bar-track{height:3px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.token-bar-fill{height:100%;border-radius:3px;transition:width .4s;background:linear-gradient(90deg,var(--ok),var(--a2))}
+.token-bar-fill.near{background:linear-gradient(90deg,var(--warn),#f97316)}
+.token-bar-fill.over{background:var(--err)}
+
+/* ─── BUTTONS ───────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r2);font-size:12.5px;font-weight:500;border:none;cursor:pointer;transition:all .12s;font-family:var(--font)}
+.btn-primary{background:var(--a);color:#fff;box-shadow:0 2px 8px rgba(59,111,212,.25)}
+.btn-primary:hover{background:var(--a2);box-shadow:0 4px 12px rgba(59,111,212,.3)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--t2)}
+.btn-ghost:hover{border-color:rgba(59,111,212,.3);color:var(--t1);background:rgba(59,111,212,.05)}
+.btn-danger{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--err)}
+.btn-danger:hover{background:rgba(239,68,68,.14)}
+.btn-sm{padding:5px 11px;font-size:11.5px}
+.btn-icon{padding:6px;border-radius:var(--r);background:transparent;border:1px solid var(--border);color:var(--t3);font-size:13px;cursor:pointer;transition:all .12s}
+.btn-icon:hover{border-color:rgba(59,111,212,.3);color:var(--t1);background:rgba(59,111,212,.05)}
+
+/* ─── BADGE ─────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.2px}
+.badge-purple{background:rgba(59,111,212,.1);color:var(--a3);border:1px solid rgba(59,111,212,.2)}
+.badge-ok{background:rgba(34,197,94,.09);color:var(--ok);border:1px solid rgba(34,197,94,.2)}
+.badge-warn{background:rgba(212,168,67,.1);color:var(--gold);border:1px solid rgba(212,168,67,.2)}
+.badge-info{background:rgba(59,111,212,.1);color:var(--info);border:1px solid rgba(59,111,212,.2)}
+.badge-err{background:rgba(239,68,68,.08);color:var(--err);border:1px solid rgba(239,68,68,.2)}
+
+/* ─── AVATAR SECTION ────────────────────────────────────── */
+.av-layout{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+.av-form-wrap{display:flex;flex-direction:column;gap:16px}
+.av-preview{position:sticky;top:0}
+.av-select-row{display:flex;gap:8px;margin-bottom:18px}
+.av-chip{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:var(--r2);border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .12s;font-size:12.5px;color:var(--t2)}
+.av-chip:hover{border-color:rgba(59,111,212,.3);color:var(--t1)}
+.av-chip.active{border-color:var(--a2);background:rgba(59,111,212,.1);color:var(--a3)}
+.av-chip .av-emoji{font-size:14px}
+.config-origin{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:6px;background:rgba(59,111,212,.08);color:var(--info);border:1px solid rgba(59,111,212,.15)}
+.config-origin.personal{background:rgba(34,197,94,.08);color:var(--ok);border-color:rgba(34,197,94,.15)}
+
+/* Preview card */
+.preview-card{background:var(--card);border:1px solid var(--border-a);border-radius:var(--r3);padding:18px;position:relative;overflow:hidden}
+.preview-card::after{content:'PREVIEW';position:absolute;top:10px;right:10px;font-size:9px;letter-spacing:1px;color:var(--t4);font-weight:600}
+.preview-avatar-ring{width:50px;height:50px;border-radius:50%;border:2px solid var(--a2);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px;background:rgba(59,111,212,.07)}
+.preview-name{font-size:15px;font-weight:600;text-align:center;color:var(--t1)}
+.preview-role{font-size:11.5px;color:var(--t3);text-align:center;margin-bottom:14px}
+.preview-chat{background:rgba(0,0,0,.25);border-radius:var(--r2);padding:10px;border:1px solid var(--border)}
+.preview-bubble{background:rgba(59,111,212,.1);border:1px solid rgba(59,111,212,.15);border-radius:0 8px 8px 8px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.55;max-width:95%}
+.preview-bubble .pb-name{font-size:10px;font-weight:600;color:var(--a3);margin-bottom:4px}
+.preview-cursor::after{content:'▋';animation:blink 1s infinite;color:var(--a2)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.preview-actions{display:flex;gap:6px;margin-top:12px}
+
+/* Predictive flows */
+.flows-container{display:flex;flex-direction:column;gap:10px}
+.flow-card{background:rgba(15,17,23,.5);border:1px solid var(--border);border-radius:var(--r2);padding:14px;transition:border-color .12s}
+.flow-card:hover{border-color:rgba(59,111,212,.2)}
+.flow-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.flow-num{font-size:10.5px;font-weight:600;color:var(--a3);background:rgba(59,111,212,.1);border:1px solid rgba(59,111,212,.18);border-radius:4px;padding:2px 9px;letter-spacing:.3px}
+.flow-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.flow-preds{margin-top:9px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.flow-pred-item label{color:var(--t3);font-size:11px}
+.flow-pred-item label::before{margin-right:4px}
+.flow-pred-item.pred-yes label::before{content:'✅';color:var(--ok)}
+.flow-pred-item.pred-doubt label::before{content:'🤔'}
+.flow-pred-item.pred-no label::before{content:'❌';color:var(--err)}
+.flows-actions{display:flex;gap:9px;margin-top:12px;align-items:center}
+.flows-limit{font-size:11.5px;color:var(--t3);margin-left:auto;font-family:'IBM Plex Mono',monospace}
+.flows-limit span{color:var(--t1);font-weight:600}
+
+/* ─── KNOWLEDGE BASE ────────────────────────────────────── */
+.kb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.kb-count{font-size:11.5px;color:var(--t3)}
+.kb-count strong{color:var(--t1)}
+.kb-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;transition:border-color .12s}
+.kb-item:hover{border-color:rgba(59,111,212,.2)}
+.kb-item-type{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);background:rgba(255,255,255,.03);padding:2px 7px;border-radius:var(--r);border:1px solid var(--border);flex-shrink:0;margin-top:2px}
+.kb-item-body{flex:1;min-width:0}
+.kb-item-title{font-size:13px;font-weight:500;color:var(--t1);margin-bottom:2px}
+.kb-item-desc{font-size:11.5px;color:var(--t3);line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kb-item-actions{display:flex;gap:4px;flex-shrink:0}
+.kb-empty{text-align:center;padding:40px;color:var(--t4);font-size:13px}
+.kb-token-bar{margin-bottom:18px}
+
+/* ─── CONVERSATIONS ─────────────────────────────────────── */
+.conv-search{position:relative;margin-bottom:14px}
+.conv-search input{padding-left:34px}
+.conv-search::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px}
+.conv-table{width:100%;border-collapse:collapse}
+.conv-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--t4);padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600}
+.conv-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--t2);vertical-align:middle}
+.conv-table tr:last-child td{border-bottom:none}
+.conv-table tr:hover td{background:rgba(255,255,255,.02);color:var(--t1)}
+.conv-preview{max-width:260px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:var(--t3)}
+.conv-expand{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:4px 10px;font-size:11px;color:var(--t3);cursor:pointer;transition:all .15s}
+.conv-expand:hover{border-color:var(--border-a);color:var(--t1)}
+.conv-detail{background:rgba(0,0,0,.3);border-radius:var(--r2);padding:14px;margin-top:8px;border:1px solid var(--border);display:none}
+.conv-detail.open{display:block;animation:fadeIn .15s ease}
+.conv-msg{padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--t2)}
+.conv-msg:last-child{border-bottom:none}
+.conv-msg-role{font-weight:600;font-size:11px;color:var(--t4);margin-bottom:3px;font-family:var(--font-h);text-transform:uppercase;letter-spacing:.5px}
+.conv-msg-role.user{color:var(--info)}
+.conv-msg-role.assistant{color:var(--a3)}
+
+/* ─── SYSTEM / USERS ────────────────────────────────────── */
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.service-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);padding:14px;display:flex;align-items:center;gap:10px}
+.service-icon{font-size:20px;flex-shrink:0;opacity:.85}
+.service-body h4{font-size:12.5px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.service-body p{font-size:11px;color:var(--t3)}
+.events-table th,.events-table td{padding:8px 12px}
+.users-table th,.users-table td{padding:9px 12px}
+
+/* ─── MODALS ────────────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease}
+.modal-bg.hidden{display:none}
+.modal{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:24px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.modal h3{font-size:17px;font-weight:600;color:var(--t1);margin-bottom:5px}
+.modal p{font-size:12.5px;color:var(--t3);margin-bottom:18px}
+.modal-tabs{display:flex;gap:0;margin-bottom:18px;background:rgba(0,0,0,.25);border-radius:var(--r);padding:3px}
+.modal-tab{flex:1;padding:6px;font-size:12.5px;font-weight:500;border:none;background:transparent;color:var(--t3);border-radius:5px;cursor:pointer;transition:all .12s}
+.modal-tab.active{background:var(--a);color:#fff}
+.modal-form{display:none}
+.modal-form.active{display:block}
+.modal-form .form-row{margin-bottom:12px}
+.modal-error{font-size:11.5px;color:var(--err);margin-top:8px;padding:7px 11px;background:rgba(239,68,68,.06);border-radius:var(--r);border:1px solid rgba(239,68,68,.12)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* Confirm modal */
+.confirm-modal{max-width:360px}
+.confirm-modal p{color:var(--t2)}
+.confirm-modal .modal-actions{justify-content:flex-end}
+
+/* ─── KB EDIT MODAL ─────────────────────────────────────── */
+.kb-modal{max-width:500px}
+
+/* ─── CONV DETAIL MODAL ─────────────────────────────────── */
+.conv-modal{max-width:600px}
+.conv-modal .conv-detail{display:block;margin-top:0;max-height:400px;overflow-y:auto}
+
+/* ─── DOCS DRAWER ───────────────────────────────────────── */
+.docs-fab{position:fixed;bottom:24px;right:24px;z-index:200;width:40px;height:40px;border-radius:50%;background:var(--a);border:none;color:#fff;font-size:16px;cursor:pointer;box-shadow:0 3px 12px rgba(59,111,212,.3);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.docs-fab:hover{transform:scale(1.08);background:var(--a2)}
+.docs-drawer{position:fixed;right:-400px;top:0;bottom:0;width:360px;background:var(--bg3);border-left:1px solid var(--border);z-index:300;transition:right .3s cubic-bezier(.25,.46,.45,.94);box-shadow:-6px 0 30px rgba(0,0,0,.35);display:flex;flex-direction:column}
+.docs-drawer.open{right:0}
+.docs-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.docs-head h4{font-size:14px;font-weight:600;color:var(--t1)}
+.docs-body{flex:1;overflow-y:auto;padding:16px 18px}
+.doc-section{margin-bottom:18px}
+.doc-section h5{font-size:12.5px;font-weight:600;color:var(--a3);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.doc-section p{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:7px}
+.doc-section .doc-tip{background:rgba(59,111,212,.06);border:1px solid rgba(59,111,212,.15);border-radius:var(--r);padding:9px 11px;font-size:11.5px;color:var(--t2);margin-top:7px;line-height:1.55}
+.doc-section .doc-tip strong{color:var(--a3)}
+.docs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:299;display:none}
+.docs-overlay.open{display:block}
+
+/* ─── DOCS ALERT BANNER ─────────────────────────────────── */
+.docs-alert{position:fixed;bottom:76px;right:24px;z-index:199;background:var(--bg3);border:1px solid rgba(59,111,212,.25);border-radius:var(--r3);padding:12px 14px;max-width:270px;box-shadow:0 6px 24px rgba(0,0,0,.3);display:flex;align-items:flex-start;gap:10px;animation:alertSlide .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.docs-alert.hiding{animation:alertHide .25s ease forwards}
+@keyframes alertSlide{from{opacity:0;transform:translateY(10px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes alertHide{to{opacity:0;transform:translateY(8px) scale(.95)}}
+.docs-alert-ico{font-size:18px;flex-shrink:0;margin-top:1px}
+.docs-alert-body{flex:1}
+.docs-alert-title{font-size:12.5px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.docs-alert-sub{font-size:11px;color:var(--t3);line-height:1.45}
+.docs-alert-arrow{position:absolute;bottom:-6px;right:20px;width:9px;height:9px;background:var(--bg3);border-right:1px solid rgba(59,111,212,.25);border-bottom:1px solid rgba(59,111,212,.25);transform:rotate(45deg)}
+
+/* ─── TOAST ─────────────────────────────────────────────── */
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:600;display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none}
+.toast{pointer-events:all;padding:9px 16px;border-radius:var(--r2);font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 18px rgba(0,0,0,.3);animation:toastIn .2s ease;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07)}
+.toast.ok{background:rgba(34,197,94,.88);color:#fff}
+.toast.err{background:rgba(239,68,68,.88);color:#fff}
+.toast.info{background:rgba(59,111,212,.9);color:#fff}
+.toast.warn{background:rgba(212,168,67,.85);color:#000}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.96)}}
+
+/* ─── TABLES SHARED ─────────────────────────────────────── */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden}
+.table-wrap table{width:100%;border-collapse:collapse}
+.table-wrap th{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--t4);padding:9px 13px;border-bottom:1px solid var(--border);font-weight:600;text-align:left;background:rgba(0,0,0,.1)}
+.table-wrap td{padding:9px 13px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--t2)}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tr:hover td{background:rgba(255,255,255,.02);color:var(--t1)}
+
+/* ─── LOCK OVERLAY ──────────────────────────────────────── */
+.lock-overlay{position:absolute;inset:0;background:rgba(10,13,20,.75);backdrop-filter:blur(4px);border-radius:var(--r3);z-index:10;display:none;align-items:center;justify-content:center;flex-direction:column;gap:9px}
+.lock-overlay.show{display:flex}
+.lock-overlay .lock-ico{font-size:28px}
+.lock-overlay p{font-size:12.5px;color:var(--t2);text-align:center;max-width:220px;line-height:1.5}
+
+/* ─── TABS ──────────────────────────────────────────────── */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab-btn{padding:8px 16px;font-size:12.5px;font-weight:500;background:transparent;border:none;color:var(--t3);cursor:pointer;position:relative;transition:color .12s}
+.tab-btn::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--a2);transform:scaleX(0);transition:transform .12s}
+.tab-btn.active{color:var(--t1)}
+.tab-btn.active::after{transform:scaleX(1)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ─── LOADING / STATES ──────────────────────────────────── */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--t4);font-size:12.5px;gap:9px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--a2);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:48px 20px;color:var(--t4)}
+.empty-state .es-ico{font-size:32px;margin-bottom:10px;opacity:.6}
+.empty-state p{font-size:12.5px;line-height:1.5}
+
+/* ─── MOBILE BOTTOM NAV ─────────────────────────────────── */
+.mob-nav{display:none}
+
+/* ─── RESPONSIVE ────────────────────────────────────────── */
+@media(max-width:960px){
+  .av-layout{grid-template-columns:1fr}
+  .av-preview{position:static}
+  .grid4{grid-template-columns:1fr 1fr}
+  .services-grid{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:768px){
+  html,body{overflow:hidden}
+
+  /* Ocultar sidebar clásico en móvil */
+  .side{display:none!important}
+
+  /* Header compacto móvil */
+  .head{
+    height:52px;min-height:52px;
+    padding:0 14px;
+    border-bottom:1px solid var(--border);
+    background:var(--bg2);
+  }
+  .head-title{font-size:13px}
+  .head-title span{display:none}
+  .limit-badge{display:none}
+  .user-name,.user-role{display:none}
+  .btn-logout{padding:4px 9px;font-size:10.5px}
+
+  /* Layout principal: ocupa toda la pantalla menos nav inferior */
+  .layout{flex-direction:column}
+  .main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;height:100vh}
+  .content{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 14px 80px;
+    /* 80px de padding abajo para que el contenido no quede bajo la nav */
+  }
+
+  /* Grids en una sola columna */
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .form-row.row2,.form-row.row3{grid-template-columns:1fr}
+  .flow-grid,.flow-preds{grid-template-columns:1fr}
+  .av-layout{grid-template-columns:1fr}
+  .av-preview{position:static}
+  .services-grid{grid-template-columns:1fr}
+
+  /* Stat cards: 2 columnas en mobile */
+  #stat-cards.grid4{grid-template-columns:1fr 1fr}
+
+  /* Sección header más compacto */
+  .sec-title h2{font-size:15px}
+  .sec-actions{flex-wrap:wrap}
+
+  /* FAB del drawer y toast ajustados para que no tapen el nav */
+  .docs-fab{bottom:76px;right:16px;width:36px;height:36px;font-size:15px}
+  .toast-wrap{bottom:76px}
+
+  /* ─── BOTTOM NAV ─────────────────────────────────────── */
+  .mob-nav{
+    display:flex;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    height:60px;
+    background:var(--bg2);
+    border-top:1px solid var(--border);
+    z-index:400;
+    align-items:stretch;
+  }
+  .mob-nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    background:transparent;
+    border:none;
+    color:var(--t4);
+    font-size:9.5px;
+    font-weight:500;
+    cursor:pointer;
+    transition:color .12s;
+    padding:6px 4px;
+    position:relative;
+    font-family:var(--font);
+  }
+  .mob-nav-item::before{
+    content:'';
+    position:absolute;
+    top:0;left:15%;right:15%;
+    height:2px;
+    background:var(--a);
+    border-radius:0 0 2px 2px;
+    transform:scaleX(0);
+    transition:transform .15s;
+  }
+  .mob-nav-item.active{color:var(--a3)}
+  .mob-nav-item.active::before{transform:scaleX(1)}
+  .mob-nav-item:hover{color:var(--t2)}
+  .mob-nav-ico{font-size:17px;line-height:1}
+  .mob-nav-lbl{font-size:9.5px;letter-spacing:.1px}
+
+  /* Tablas horizontales scroll en móvil */
+  .table-wrap{overflow-x:auto}
+  .conv-table{min-width:520px}
+
+  /* Cards más compactas */
+  .card,.stat-card{padding:13px}
+  .stat-val{font-size:22px}
+
+  /* Avatar chips en scroll horizontal */
+  .av-select-row{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  .av-chip{flex-shrink:0}
+
+  /* Modales a pantalla completa inferior */
+  .modal-bg{align-items:flex-end}
+  .modal{border-radius:var(--r3) var(--r3) 0 0;max-width:100%;width:100%;padding:20px}
+  .modal h3{font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LAYOUT ═══════════ -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="side" id="sidebar">
+    <div class="side-logo">
+      <div class="logo-mark">VID</div>
+      <div class="logo-text">
+        <h1>VID Admin</h1>
+        <p>Luna Roja Digital</p>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <div class="nav-group">
+        <div class="nav-label" data-i18n="general">General</div>
+        <button class="ni active" data-section="dashboard" onclick="navigate('dashboard',this)">
+          <span class="ni-ico">📊</span><span data-i18n="dashboard">Dashboard</span>
+        </button>
+        <button class="ni" data-section="avatar" onclick="navigate('avatar',this)">
+          <span class="ni-ico">🤖</span><span data-i18n="miAvatar">Mi Avatar</span>
+          <span class="ni-badge new">KEY</span>
+        </button>
+        <button class="ni" data-section="kb" onclick="navigate('kb',this)">
+          <span class="ni-ico">📚</span><span data-i18n="baseConocimiento">Base de Conocimiento</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label" data-i18n="datos">Datos</div>
+        <button class="ni" data-section="conversations" onclick="navigate('conversations',this)">
+          <span class="ni-ico">💬</span><span data-i18n="conversaciones">Conversaciones</span>
+        </button>
+      </div>
+      <div class="nav-group admin-only-nav" style="display:none">
+        <div class="nav-label" data-i18n="admin">Administración</div>
+        <button class="ni" data-section="system" onclick="navigate('system',this)">
+          <span class="ni-ico">⚙️</span><span data-i18n="sistema">Sistema</span>
+          <span class="ni-badge admin-only">ADMIN</span>
+        </button>
+        <button class="ni" data-section="users" onclick="navigate('users',this)">
+          <span class="ni-ico">👥</span><span data-i18n="usuarios">Usuarios</span>
+          <span class="ni-badge admin-only">ADMIN</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="side-foot">
+      <div id="sidebar-user-area"></div>
+      <div class="status-row" id="sys-status-row">
+        <div class="status-dot" id="sys-dot"></div>
+        <span id="sys-status-text" data-i18n="verificando">Verificando…</span>
+      </div>
+      <div class="brand-credit" data-i18n="logo">Luna Roja Digital · <span>Guervency Guerrier</span></div>
+      <div id="lang-badge" style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--t4);padding:4px 10px;cursor:pointer;border-radius:var(--r);transition:all .15s;user-select:none" onclick="cycleLang()" title="Click to change language">🌐 <span id="lang-label">ES</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrap">
+
+    <!-- HEADER -->
+    <header class="head">
+      <div class="head-title" id="head-title"><span data-i18n="dashboard">Dashboard</span> <span id="head-subtitle" data-i18n="metricas">Métricas del sistema</span></div>
+      <div class="head-actions">
+        <div class="limit-badge" id="limit-badge" style="display:none">
+          <span data-i18n="usosHoy">Usos hoy:</span>
+          <span class="limit-num" id="limit-num">0/10</span>
+          <div class="limit-bar"><div class="limit-bar-fill" id="limit-bar-fill" style="width:0%"></div></div>
+        </div>
+        <div id="auth-area"></div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <section class="section active" id="sec-dashboard">
+        <div class="sec-header">
+          <div class="sec-title"><h2 data-i18n="dashboard">Dashboard</h2><p data-i18n="metricasDash">Métricas en tiempo real del sistema VID</p></div>
+          <div class="sec-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadDashboard()" data-i18n="actualizar">↻ Actualizar</button>
+          </div>
+        </div>
+        <div class="grid4" id="stat-cards">
+          <div class="stat-card" style="--line-color:var(--a2)"><span class="stat-ico">💬</span><div class="stat-val" id="st-convs">—</div><div class="stat-label" data-i18n="conv10min">Conversaciones (10 min)</div></div>
+          <div class="stat-card" style="--line-color:var(--ok)"><span class="stat-ico">🗓️</span><div class="stat-val" id="st-today">—</div><div class="stat-label" data-i18n="hoy">Hoy</div></div>
+          <div class="stat-card" style="--line-color:var(--info)"><span class="stat-ico">👤</span><div class="stat-val" id="st-users">—</div><div class="stat-label" data-i18n="usuariosReg">Usuarios registrados</div></div>
+          <div class="stat-card" id="cleanup-timer-card" style="--line-color:var(--gold);cursor:pointer" onclick="showCleanupInfo()">
+            <span class="stat-ico">⏳</span>
+            <div class="stat-val" id="cleanup-timer">10:00</div>
+            <div class="stat-label" data-i18n="cleanupLabel">Limpieza en</div>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:18px">
+          <div class="card">
+            <div class="card-title"><span class="ct-ico">🔥</span> Avatares más usados</div>
+            <div id="avatar-usage-chart" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="ct-ico">💡</span> Acceso rápido</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('avatar',document.querySelector('[data-section=avatar]'))">🤖 Configurar mi avatar</button>
+              <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('kb',document.querySelector('[data-section=kb]'))">📚 Editar base de conocimiento</button>
+              <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('conversations',document.querySelector('[data-section=conversations]'))">💬 Ver conversaciones</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── MI AVATAR ── -->
+      <section class="section" id="sec-avatar">
+        <div class="sec-header">
+          <div class="sec-title"><h2 data-i18n="miAvatar">Mi Avatar</h2><p data-i18n="personalizaDesc">Personaliza el comportamiento y personalidad de tu asistente IA</p></div>
+          <div class="sec-actions">
+            <button class="btn btn-ghost btn-sm" onclick="resetAvatarToGlobal()" id="btn-reset-av" style="display:none">⟳ <span data-i18n="restaurarGlobal">Restaurar global</span></button>
+            <button class="btn btn-primary" onclick="saveAvatarConfig()" id="btn-save-av">💾 <span data-i18n="guardarCambios">Guardar cambios</span></button>
+          </div>
+        </div>
+
+        <!-- Avatar selector -->
+        <div class="av-select-row">
+          <button class="av-chip active" id="av-chip-nara" onclick="switchAvatar('nara')"><span class="av-emoji">🧑‍💼</span> Nara01</button>
+          <button class="av-chip" id="av-chip-mimi" onclick="switchAvatar('mimi')"><span class="av-emoji">✨</span> Mimi</button>
+        </div>
+
+        <div class="av-layout">
+          <!-- FORM -->
+          <div class="av-form-wrap">
+
+            <!-- Identidad -->
+            <div class="card" id="card-identity">
+              <div class="card-title"><span class="ct-ico">🪪</span> Identidad</div>
+              <div class="form-row row2">
+                <div>
+                  <label>Nombre del asistente</label>
+                  <input type="text" id="av-nombre" placeholder="Ej: Carlos, Sofía, Alex…" maxlength="60" oninput="updatePreview()">
+                </div>
+                <div>
+                  <label>Título profesional</label>
+                  <input type="text" id="av-rol" placeholder="Ej: Asesor Legal Senior" maxlength="80" oninput="updatePreview()">
+                </div>
+              </div>
+              <div class="form-row">
+                <label>Tono de voz</label>
+                <select id="av-tono" onchange="updatePreview()">
+                  <option value="Profesional y amigable">Profesional y amigable</option>
+                  <option value="Formal y preciso">Formal y preciso</option>
+                  <option value="Cercano y empático">Cercano y empático</option>
+                  <option value="Entusiasta y energético">Entusiasta y energético</option>
+                  <option value="Técnico y detallista">Técnico y detallista</option>
+                  <option value="Casual y relajado">Casual y relajado</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Personalidad -->
+            <div class="card">
+              <div class="card-title"><span class="ct-ico">🧠</span> Personalidad y comportamiento</div>
+              <div class="form-row">
+                <label>Instrucciones de personalidad <span class="lbl-hint">— ¿Quién es tu asistente?</span></label>
+                <textarea id="av-personalidad" rows="6" maxlength="2000" oninput="updateCharCount('av-personalidad','cc-pers',2000);updatePreview()" placeholder="Eres un asesor legal senior con más de 15 años de experiencia en derecho corporativo. Tu misión es entender el problema del usuario antes de ofrecer soluciones. Escuchas activamente, identificas el perfil del caso y guías al usuario hacia la acción correcta..."></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+                  <div class="input-hint">Define quién es, cómo habla y cuál es su misión</div>
+                  <div class="char-counter" id="cc-pers">0/2000</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contexto del negocio -->
+            <div class="card">
+              <div class="card-title"><span class="ct-ico">🏢</span> Contexto del negocio</div>
+              <div class="form-row">
+                <label>¿Qué debe saber tu asistente sobre el negocio?</label>
+                <textarea id="av-contexto" rows="7" maxlength="4000" oninput="updateCharCount('av-contexto','cc-ctx',4000);updateTokenBar()" placeholder="Bufete de abogados con especialización en:&#10;- Derecho corporativo&#10;- Litigios civiles&#10;- Derecho laboral&#10;&#10;Precios referenciales:&#10;- Consulta inicial: $50 USD (1 hora)&#10;- Constitución de empresa: desde $500 USD"></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:4px">
+                  <div class="char-counter" id="cc-ctx">0/4000</div>
+                </div>
+              </div>
+              <div class="token-bar" id="token-bar">
+                <div class="token-bar-labels">
+                  <span id="tk-used">0 chars usados</span>
+                  <span>Groq: 4,000 · DeepSeek: ilimitado</span>
+                </div>
+                <div class="token-bar-track"><div class="token-bar-fill" id="tk-fill" style="width:0%"></div></div>
+              </div>
+            </div>
+
+            <!-- Flujos predictivos -->
+            <div class="card">
+              <div class="card-title"><span class="ct-ico">⚡</span> Flujos de conversación predictivos <span class="badge badge-purple" style="margin-left:4px">ÚNICO</span></div>
+              <p style="font-size:12.5px;color:var(--t3);margin-bottom:16px;line-height:1.5">Configura cómo responde tu asistente ante situaciones específicas. Define el disparador y las 3 posibles reacciones del usuario.</p>
+              <div class="flows-container" id="flows-container"></div>
+              <div class="flows-actions">
+                <button class="btn btn-ghost btn-sm" onclick="loadExampleFlow()">👁️ Ver ejemplo</button>
+                <button class="btn btn-ghost btn-sm" onclick="addFlow()" id="btn-add-flow">+ Añadir flujo</button>
+                <div class="flows-limit">Flujos: <span id="flows-count">0</span>/10</div>
+              </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="card">
+              <div class="card-title"><span class="ct-ico">📞</span> Datos de contacto</div>
+              <p style="font-size:12px;color:var(--t3);margin-bottom:14px">Tu asistente usará estos datos para referir usuarios a ti.</p>
+              <div class="form-row row2">
+                <div>
+                  <label>Teléfono</label>
+                  <input type="tel" id="av-tel" placeholder="+1 (809) 000-0000">
+                </div>
+                <div>
+                  <label>Email de contacto</label>
+                  <input type="email" id="av-email" placeholder="hola@tunegocio.com">
+                </div>
+              </div>
+              <div class="form-row row2">
+                <div>
+                  <label>Horario de atención</label>
+                  <input type="text" id="av-horario" placeholder="Lun-Vie 9am - 6pm">
+                </div>
+                <div>
+                  <label>WhatsApp / Calendly</label>
+                  <input type="url" id="av-link" placeholder="https://wa.me/…">
+                </div>
+              </div>
+              <div class="form-row">
+                <label>Mensaje de llamado a la acción</label>
+                <input type="text" id="av-cta" placeholder="¿Te gustaría agendar una consulta gratuita?">
+              </div>
+            </div>
+
+          </div><!-- /av-form-wrap -->
+
+          <!-- PREVIEW -->
+          <div class="av-preview">
+            <div class="preview-card">
+              <div class="preview-avatar-ring" id="prev-emoji">🧑‍💼</div>
+              <div class="preview-name" id="prev-name">Nara01</div>
+              <div class="preview-role" id="prev-role">Asistente virtual</div>
+              <div class="preview-chat">
+                <div class="preview-bubble">
+                  <div class="pb-name" id="prev-pbname">Nara01</div>
+                  <div id="prev-text">Cargando configuración…</div>
+                </div>
+              </div>
+              <div class="preview-actions">
+                <button class="btn btn-ghost btn-sm" style="flex:1" onclick="generatePreview()">✨ Regenerar</button>
+              </div>
+            </div>
+            <div style="margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r3);padding:14px">
+              <div class="card-title" style="margin-bottom:10px"><span class="ct-ico">📊</span> Config activa</div>
+              <div id="config-origin-display" style="font-size:12px;color:var(--t3);line-height:1.7"></div>
+            </div>
+          </div>
+
+        </div><!-- /av-layout -->
+        
+        <!-- Lock overlay for daily limit -->
+        <div class="lock-overlay" id="av-lock">
+          <div class="lock-ico">🔒</div>
+          <p><strong>Límite diario alcanzado (10/10)</strong><br>Vuelve mañana para personalizar tu avatar.</p>
+        </div>
+
+      </section>
+
+      <!-- ── BASE DE CONOCIMIENTO ── -->
+      <section class="section" id="sec-kb">
+        <div class="sec-header">
+          <div class="sec-title"><h2>Base de Conocimiento</h2><p>Gestiona lo que tu asistente sabe sobre tu negocio</p></div>
+          <div class="sec-actions">
+            <button class="btn btn-primary" onclick="openKbModal(null)">+ Añadir item</button>
+          </div>
+        </div>
+        <div class="kb-token-bar">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <div id="kb-count-label" class="kb-count"><strong>0</strong> de 20 items usados</div>
+            <div style="font-size:11.5px;color:var(--t3)" id="kb-token-est">~0 tokens estimados</div>
+          </div>
+          <div class="token-bar-track"><div class="token-bar-fill" id="kb-bar" style="width:0%"></div></div>
+        </div>
+        <div id="kb-list"></div>
+      </section>
+
+      <!-- ── CONVERSACIONES ── -->
+      <section class="section" id="sec-conversations">
+        <div class="sec-header">
+          <div class="sec-title"><h2>Conversaciones</h2><p>Historial de todas las conversaciones del chatbot</p></div>
+          <div class="sec-actions" id="conv-admin-actions" style="display:none">
+            <button class="btn btn-danger btn-sm" onclick="clearAllConversations()">🗑️ Limpiar todo</button>
+          </div>
+        </div>
+        <div class="conv-search"><input type="text" id="conv-search" placeholder="Buscar por sesión o texto…" oninput="filterConversations()"></div>
+        <div class="table-wrap">
+          <table class="conv-table">
+            <thead><tr><th>Sesión</th><th>Avatar</th><th>Mensajes</th><th>Fecha</th><th>Preview</th><th></th></tr></thead>
+            <tbody id="conv-tbody"><tr><td colspan="6" class="loading"><div class="spinner"></div> Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── SISTEMA (ADMIN) ── -->
+      <section class="section" id="sec-system">
+        <div class="sec-header">
+          <div class="sec-title"><h2>Sistema</h2><p>Estado de servicios y configuración global</p></div>
+          <div class="sec-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadSystem()">↻ Refrescar</button>
+            <button class="btn btn-ghost btn-sm" onclick="reloadMemory()">🧠 Recargar memoria</button>
+          </div>
+        </div>
+        <div class="services-grid" id="services-grid">
+          <div class="loading"><div class="spinner"></div> Cargando…</div>
+        </div>
+        <div style="margin-top:20px">
+          <div class="card-title" style="margin-bottom:12px"><span class="ct-ico">📋</span> Configuración global de avatares</div>
+          <div class="tabs-row">
+            <button class="tab-btn active" onclick="switchGlobalTab('nara',this)">🧑‍💼 Nara01</button>
+            <button class="tab-btn" onclick="switchGlobalTab('mimi',this)">✨ Mimi</button>
+          </div>
+          <div id="global-config-form">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+          <div style="margin-top:14px;display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="saveGlobalConfig()" id="btn-save-global">💾 Guardar config global</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── USUARIOS (ADMIN) ── -->
+      <section class="section" id="sec-users">
+        <div class="sec-header">
+          <div class="sec-title"><h2>Usuarios</h2><p>Usuarios registrados en la plataforma</p></div>
+        </div>
+        <div class="table-wrap">
+          <table class="users-table">
+            <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Registro</th><th>Último login</th><th>Estado</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="6" class="loading"><div class="spinner"></div> Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- /main-wrap -->
+</div><!-- /layout -->
+
+<!-- ═══════════ MOBILE BOTTOM NAV ═══════════ -->
+<nav class="mob-nav" id="mob-nav">
+  <button class="mob-nav-item active" data-section="dashboard" onclick="navigate('dashboard',this);mobNavSync('dashboard')">
+    <span class="mob-nav-ico">📊</span>
+    <span class="mob-nav-lbl">Dashboard</span>
+  </button>
+  <button class="mob-nav-item" data-section="avatar" onclick="navigate('avatar',this);mobNavSync('avatar')">
+    <span class="mob-nav-ico">🤖</span>
+    <span class="mob-nav-lbl">Avatar</span>
+  </button>
+  <button class="mob-nav-item" data-section="kb" onclick="navigate('kb',this);mobNavSync('kb')">
+    <span class="mob-nav-ico">📚</span>
+    <span class="mob-nav-lbl">Base</span>
+  </button>
+  <button class="mob-nav-item" data-section="conversations" onclick="navigate('conversations',this);mobNavSync('conversations')">
+    <span class="mob-nav-ico">💬</span>
+    <span class="mob-nav-lbl">Chats</span>
+  </button>
+  <button class="mob-nav-item admin-only-nav" data-section="system" onclick="navigate('system',this);mobNavSync('system')" style="display:none">
+    <span class="mob-nav-ico">⚙️</span>
+    <span class="mob-nav-lbl">Sistema</span>
+  </button>
+</nav>
+
+<!-- ═══════════ DOCS FAB + DRAWER ═══════════ -->
+<button class="docs-fab" onclick="toggleDocs()" title="Ayuda contextual">❓</button>
+<div class="docs-overlay" id="docs-overlay" onclick="toggleDocs()"></div>
+<div class="docs-drawer" id="docs-drawer">
+  <div class="docs-head">
+    <h4 id="docs-title">📖 Guía rápida</h4>
+    <button class="btn-icon" onclick="toggleDocs()">✕</button>
+  </div>
+  <div class="docs-body" id="docs-body"></div>
+</div>
+
+<!-- ═══════════ AUTH MODAL ═══════════ -->
+<div class="modal-bg hidden" id="auth-modal" onclick="closeModalOnBg(event,'auth-modal')">
+  <div class="modal">
+    <h3 data-i18n="accedePanel">Accede a tu panel</h3>
+    <p data-i18n="iniciaSesionDesc">Inicia sesión o crea una cuenta para personalizar tu avatar.</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchAuthTab('login',this)" data-i18n="iniciarSesion">Iniciar sesión</button>
+      <button class="modal-tab" onclick="switchAuthTab('register',this)" data-i18n="registrarse">Registrarse</button>
+    </div>
+    <div class="modal-form active" id="form-login">
+      <div class="form-row"><label data-i18n="email">Email</label><input type="email" id="login-email" placeholder="tu@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-row"><label data-i18n="contrasena">Contraseña</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="modal-error hidden" id="login-err"></div>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('auth-modal')" data-i18n="cancelar">Cancelar</button><button class="btn btn-primary" onclick="doLogin()" id="btn-login" data-i18n="entrar">Entrar →</button></div>
+    </div>
+    <div class="modal-form" id="form-register">
+      <div class="form-row"><label data-i18n="nombre">Nombre</label><input type="text" id="reg-name" placeholder="Tu nombre"></div>
+      <div class="form-row"><label data-i18n="email">Email</label><input type="email" id="reg-email" placeholder="tu@email.com"></div>
+      <div class="form-row"><label data-i18n="contrasena">Contraseña</label><input type="password" id="reg-pass" placeholder="Mín. 6 caracteres"></div>
+      <div class="modal-error hidden" id="reg-err"></div>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('auth-modal')" data-i18n="cancelar">Cancelar</button><button class="btn btn-primary" onclick="doRegister()" id="btn-register" data-i18n="crearCuenta">Crear cuenta →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONFIRM MODAL ═══════════ -->
+<div class="modal-bg hidden" id="confirm-modal">
+  <div class="modal confirm-modal">
+    <h3 id="confirm-title">¿Confirmar acción?</h3>
+    <p id="confirm-msg">Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="btn-confirm-ok" onclick="">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ KB MODAL ═══════════ -->
+<div class="modal-bg hidden" id="kb-modal" onclick="closeModalOnBg(event,'kb-modal')">
+  <div class="modal kb-modal">
+    <h3 id="kb-modal-title">Añadir item</h3>
+    <input type="hidden" id="kb-edit-idx" value="">
+    <div class="form-row"><label>Título</label><input type="text" id="kb-title" placeholder="Ej: Consulta inicial"></div>
+    <div class="form-row"><label>Descripción</label><textarea id="kb-desc" rows="4" placeholder="Describe el item con detalle…"></textarea></div>
+    <div class="form-row"><label>Tipo</label>
+      <select id="kb-type">
+        <option value="servicio">Servicio</option>
+        <option value="precio">Precio</option>
+        <option value="faq">Pregunta frecuente</option>
+        <option value="regla">Regla de negocio</option>
+        <option value="info">Información general</option>
+        <option value="proceso">Proceso</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('kb-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveKbItem()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<script>
+/* ═══ i18n ════════════════════════════════════════════════ */
+const LANG = (navigator.language || 'es').slice(0, 2);
+const LOCALE = ['en','fr'].includes(LANG) ? LANG : 'es';
+
+const _ = {
+  es: {
+    // Nav
+    general:'General', datos:'Datos', admin:'Administración',
+    dashboard:'Dashboard', miAvatar:'Mi Avatar', baseConocimiento:'Base de Conocimiento',
+    conversaciones:'Conversaciones', sistema:'Sistema', usuarios:'Usuarios',
+    // Headers
+    metricas:'Métricas del sistema', personaliza:'Personaliza tu asistente',
+    gestiona:'Gestiona el conocimiento', historial:'Historial de chats',
+    estado:'Estado y configuración global', gestionCuentas:'Gestión de cuentas',
+    // Stats
+    convTotales:'Conversaciones totales', hoy:'Hoy',
+    usuariosReg:'Usuarios registrados', avataresAct:'Avatares activos',
+    // Avatar section
+    eligeAsistente:'Elige tu asistente', identidad:'Identidad',
+    personalidad:'Personalidad y comportamiento', contexto:'Contexto del negocio',
+    flujos:'Flujos de conversación predictivos', contacto:'Datos de contacto',
+    // Buttons
+    guardarCambios:'Guardar cambios', annadirItem:'+ Añadir item',
+    cancelar:'Cancelar', aplicar:'Aplicar', confirmar:'Confirmar',
+    iniciarSesion:'Iniciar sesión', registrarse:'Registrarse',
+    salir:'Salir', actualizar:'↻ Actualizar',
+    // Auth
+    accedePanel:'Accede a tu panel', email:'Email', contrasena:'Contraseña',
+    nombre:'Nombre', bienvenido:'Bienvenido',
+    // Status
+    operativo:'Operativo', error:'Error', cargando:'Cargando…',
+    sinConversaciones:'Sin conversaciones aún.',
+    // Placeholders
+    escribeMensaje:'Escribe un mensaje…',
+    // Flows
+    disparador:'Si el usuario menciona…', respuesta:'Respuesta base',
+    interesado:'Si el usuario está INTERESADO →',
+    dudas:'Si el usuario tiene DUDAS →', rechaza:'Si el usuario RECHAZA →',
+    // KB
+    titulo:'Título', descripcion:'Descripción', tipo:'Tipo',
+    // Misc
+    avatarDesarrollo:'Avatar en desarrollo',
+    entendido:'Entendido', seleccionarVoz:'Seleccionar voz',
+    noVoces:'No hay voces disponibles',
+    // Sidebar
+    logo:'Luna Roja Digital', verificando:'Verificando…',
+    metricasDash:'Métricas en tiempo real del sistema VID',
+    usosHoy:'Usos hoy:', usuario:'Usuario',
+    personalizaDesc:'Personaliza el comportamiento y personalidad de tu asistente IA',
+    restaurarGlobal:'Restaurar global',
+    si:'Sí', no:'No', guardar:'Guardar',
+    editando:'Editando', creando:'Creando',
+    // Avatar form
+    nombreAsistente:'Nombre del asistente', tituloProf:'Título profesional',
+    tonoVoz:'Tono de voz', instruccionesPers:'Instrucciones de personalidad',
+    queDebeSaber:'¿Qué debe saber tu asistente sobre el negocio?',
+    preview:'VISTA PREVIA',
+    configActiva:'Config activa',
+    usandoDemo:'Usando config de demostración (sin sesión)',
+    configPersonal:'Tienes una config personal activa',
+    configGlobal:'Usando config global del admin',
+    // KB
+    gestionaConocimiento:'Gestiona lo que tu asistente sabe sobre tu negocio',
+    annadirItemLabel:'+ Añadir item',
+    // Conversations
+    buscar:'Buscar por sesión o texto…',
+    limpiarTodo:'🗑️ Limpiar todo',
+    // System
+    estadoServicios:'Estado de servicios y configuración global',
+    refrescar:'↻ Refrescar',
+    recargarMemoria:'🧠 Recargar memoria',
+    // Users
+    usuariosRegistrados:'Usuarios registrados en la plataforma',
+    // Modal
+    accion:'¿Confirmar acción?', noDeshacer:'Esta acción no se puede deshacer.',
+    // Toast
+    errorGuardar:'Error al guardar',
+    error:'Error',
+    sesionCerrada:'Sesión cerrada',
+    bienvenidoMsg:'Bienvenido',
+    cuentaCreada:'Cuenta creada. ¡Bienvenido/a!',
+    iniciaSesionDesc:'Inicia sesión o crea una cuenta para personalizar tu avatar.',
+    entrar:'Entrar →',
+    crearCuenta:'Crear cuenta →',
+    conv10min:'Conversaciones (10 min)',
+    idiomaCambiado:'Idioma cambiado',
+    cleanupLabel:'Limpieza en',
+    cleanupInfoMsg:'Los mensajes se borran automáticamente cada 10 minutos',
+  },
+  en: {
+    general:'General', datos:'Data', admin:'Administration',
+    dashboard:'Dashboard', miAvatar:'My Avatar', baseConocimiento:'Knowledge Base',
+    conversaciones:'Conversations', sistema:'System', usuarios:'Users',
+    metricas:'System metrics', personaliza:'Customize your assistant',
+    gestiona:'Manage knowledge', historial:'Chat history',
+    estado:'Status & global config', gestionCuentas:'Account management',
+    convTotales:'Total conversations', hoy:'Today',
+    usuariosReg:'Registered users', avataresAct:'Active avatars',
+    eligeAsistente:'Choose your assistant', identidad:'Identity',
+    personalidad:'Personality & behavior', contexto:'Business context',
+    flujos:'Predictive conversation flows', contacto:'Contact info',
+    guardarCambios:'Save changes', annadirItem:'+ Add item',
+    cancelar:'Cancel', aplicar:'Apply', confirmar:'Confirm',
+    iniciarSesion:'Sign in', registrarse:'Register',
+    salir:'Logout', actualizar:'↻ Refresh',
+    accedePanel:'Access your panel', email:'Email', contrasena:'Password',
+    nombre:'Name', bienvenido:'Welcome',
+    operativo:'Operational', error:'Error', cargando:'Loading…',
+    sinConversaciones:'No conversations yet.',
+    escribeMensaje:'Type a message…',
+    disparador:'If user mentions…', respuesta:'Base response',
+    interesado:'If user is INTERESTED →',
+    dudas:'If user has DOUBTS →', rechaza:'If user REJECTS →',
+    titulo:'Title', descripcion:'Description', tipo:'Type',
+    avatarDesarrollo:'Avatar in development',
+    entendido:'Got it', seleccionarVoz:'Select voice',
+    noVoces:'No voices available',
+    logo:'Luna Roja Digital', verificando:'Checking…',
+    metricasDash:'Real-time system metrics for VID',
+    usosHoy:'Uses today:', usuario:'User',
+    personalizaDesc:'Customize your AI assistant\'s behavior and personality',
+    restaurarGlobal:'Restore global',
+    si:'Yes', no:'No', guardar:'Save',
+    editando:'Editing', creando:'Creating',
+    nombreAsistente:'Assistant name', tituloProf:'Professional title',
+    tonoVoz:'Voice tone', instruccionesPers:'Personality instructions',
+    queDebeSaber:'What should your assistant know about the business?',
+    preview:'PREVIEW',
+    configActiva:'Active config',
+    usandoDemo:'Using demo config (no session)',
+    configPersonal:'You have an active personal config',
+    configGlobal:'Using global admin config',
+    gestionaConocimiento:'Manage what your assistant knows about your business',
+    annadirItemLabel:'+ Add item',
+    buscar:'Search by session or text…',
+    limpiarTodo:'🗑️ Clear all',
+    estadoServicios:'Service status and global configuration',
+    refrescar:'↻ Refresh',
+    recargarMemoria:'🧠 Reload memory',
+    usuariosRegistrados:'Registered users on the platform',
+    accion:'Confirm action?', noDeshacer:'This action cannot be undone.',
+    errorGuardar:'Error saving',
+    error:'Error',
+    sesionCerrada:'Session closed',
+    bienvenidoMsg:'Welcome',
+    cuentaCreada:'Account created. Welcome!',
+    iniciaSesionDesc:'Sign in or create an account to customize your avatar.',
+    entrar:'Sign in →',
+    crearCuenta:'Create account →',
+    conv10min:'Conversations (10 min)',
+    idiomaCambiado:'Language changed',
+    cleanupLabel:'Cleanup in',
+    cleanupInfoMsg:'Messages are automatically deleted every 10 minutes',
+  },
+  fr: {
+    general:'Général', datos:'Données', admin:'Administration',
+    dashboard:'Tableau de bord', miAvatar:'Mon Avatar', baseConocimiento:'Base de Connaissances',
+    conversaciones:'Conversations', sistema:'Système', usuarios:'Utilisateurs',
+    metricas:'Métriques système', personaliza:'Personnalisez votre assistant',
+    gestiona:'Gérez les connaissances', historial:'Historique des chats',
+    estado:'État et configuration globale', gestionCuentas:'Gestion des comptes',
+    convTotales:'Conversations totales', hoy:'Aujourd\'hui',
+    usuariosReg:'Utilisateurs inscrits', avataresAct:'Avatars actifs',
+    eligeAsistente:'Choisissez votre assistant', identidad:'Identité',
+    personalidad:'Personnalité & comportement', contexto:'Contexte professionnel',
+    flujos:'Flux de conversation prédictifs', contacto:'Coordonnées',
+    guardarCambios:'Enregistrer', annadirItem:'+ Ajouter',
+    cancelar:'Annuler', aplicar:'Appliquer', confirmar:'Confirmer',
+    iniciarSesion:'Connexion', registrarse:'S\'inscrire',
+    salir:'Déconnexion', actualizar:'↻ Actualiser',
+    accedePanel:'Accédez à votre panneau', email:'E-mail', contrasena:'Mot de passe',
+    nombre:'Nom', bienvenido:'Bienvenue',
+    operativo:'Opérationnel', error:'Erreur', cargando:'Chargement…',
+    sinConversaciones:'Aucune conversation pour le moment.',
+    escribeMensaje:'Écrivez un message…',
+    disparador:'Si l\'utilisateur mentionne…', respuesta:'Réponse de base',
+    interesado:'Si l\'utilisateur est INTÉRESSÉ →',
+    dudas:'Si l\'utilisateur a des DOUTES →', rechaza:'Si l\'utilisateur REFUSE →',
+    titulo:'Titre', descripcion:'Description', type:'Type',
+    avatarDesarrollo:'Avatar en développement',
+    entendido:'Compris', seleccionarVoz:'Choisir une voix',
+    noVoces:'Aucune voix disponible',
+    logo:'Luna Roja Digital', verification:'Vérification…',
+    metricasDash:'Métriques en temps réel du système VID',
+    usosHoy:'Utilisations aujourd\'hui:', usuario:'Utilisateur',
+    personalizaDesc:'Personnalisez le comportement de votre assistant IA',
+    restaurarGlobal:'Restaurer global',
+    si:'Oui', no:'Non', guardar:'Enregistrer',
+    editando:'Édition', creando:'Création',
+    nombreAsistente:'Nom de l\'assistant', tituloProf:'Titre professionnel',
+    tonoVoz:'Ton de voix', instruccionesPers:'Instructions de personnalité',
+    queDebeSaber:'Que doit savoir votre assistant sur l\'entreprise ?',
+    preview:'APERÇU',
+    configActiva:'Configuration active',
+    usandoDemo:'Configuration de démo (sans session)',
+    configPersonal:'Vous avez une configuration personnelle active',
+    configGlobal:'Configuration globale de l\'admin',
+    gestionaConocimiento:'Gérez ce que votre assistant sait sur votre entreprise',
+    annadirItemLabel:'+ Ajouter un élément',
+    buscar:'Rechercher par session ou texte…',
+    limpiarTodo:'🗑️ Tout effacer',
+    estadoServicios:'État des services et configuration globale',
+    refrescar:'↻ Actualiser',
+    recargarMemoria:'🧠 Recharger la mémoire',
+    usuariosRegistrados:'Utilisateurs inscrits sur la plateforme',
+    accion:'Confirmer l\'action ?', noDeshacer:'Cette action est irréversible.',
+    errorGuardar:'Erreur lors de l\'enregistrement',
+    error:'Erreur',
+    sesionCerrada:'Session fermée',
+    bienvenidoMsg:'Bienvenue',
+    cuentaCreada:'Compte créé. Bienvenue !',
+    iniciaSesionDesc:'Connectez-vous ou créez un compte pour personnaliser votre avatar.',
+    entrar:'Connexion →',
+    crearCuenta:'Créer un compte →',
+    conv10min:'Conversations (10 min)',
+    idiomaCambiado:'Langue changée',
+    cleanupLabel:'Nettoyage dans',
+    cleanupInfoMsg:'Les messages sont automatiquement supprimés toutes les 10 minutes',
+  }
+};
+
+function __(key) {
+  return _[LOCALE][key] || _['es'][key] || key;
+}
+
+function t(el) {
+  if (!el) return;
+  const key = el.dataset?.i18n;
+  if (key && _[LOCALE][key]) el.textContent = _[LOCALE][key];
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (_[LOCALE][key]) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = _[LOCALE][key];
+      } else {
+        el.textContent = _[LOCALE][key];
+      }
+    }
+  });
+  // Update html lang
+  document.documentElement.lang = LOCALE;
+  // Update language badge
+  const lb = document.getElementById('lang-label');
+  if (lb) lb.textContent = LOCALE.toUpperCase();
+}
+
+const LANG_CYCLE = { es:'en', en:'fr', fr:'es' };
+function cycleLang() {
+  LOCALE = LANG_CYCLE[LOCALE] || 'es';
+  document.documentElement.lang = LOCALE;
+  const lb = document.getElementById('lang-label');
+  if (lb) lb.textContent = LOCALE.toUpperCase();
+  applyI18n();
+  // Re-render current section
+  loadSection(S.currentSection);
+  // Re-render auth area if logged in
+  if (S.user) renderAuthArea(S.user);
+  // Re-render head
+  updateHeadTitle(S.currentSection);
+  toast(__('idiomaCambiado') + ': ' + LOCALE.toUpperCase(), 'info', 2000);
+}
+
+/* ═══ STATE ═══════════════════════════════════════════════ */
+const S = {
+  token: sessionStorage.getItem('vid_token') || null,
+  user: null,
+  currentAvatar: 'nara',
+  currentSection: 'dashboard',
+  avatarConfigs: {},
+  userConfigs: {},
+  flows: [],
+  kb: [],
+  conversations: [],
+  convAll: [],
+  dailyUsage: 0,
+  dailyLimit: 10,
+  globalTabAvatar: 'nara',
+};
+
+const AVATARS_META = {
+  nara: { emoji:'🧑‍💼', name:'Nara01', greet:'Hola, ¿en qué puedo ayudarte hoy?' },
+  mimi: { emoji:'✨', name:'Mimi', greet:'¡Hola! 💫 ¿Cómo puedo hacerte el día mejor?' }
+};
+
+const DEMO_CONFIG = {
+  nara: {
+    nombre:'Carlos Roa', rol:'Asesor Legal Senior',
+    tono:'Profesional y amigable',
+    personalidad:'Soy Carlos Roa, asesor legal con 15 años de experiencia en derecho corporativo, litigios civiles y derecho laboral. Mi misión es escuchar activamente tu situación, identificar el tipo de caso y guiarte hacia la acción correcta. Siempre mantengo un tono profesional pero accesible. Mi objetivo es que te sientas seguro/a y sepas exactamente qué pasos seguir.',
+    contexto:`Bufete Roa & Asociados — Especialistas en:
+- Derecho corporativo (constitución de empresas, contratos, fusiones, adquisiciones)
+- Litigios civiles (divorcios, sucesiones, disputas contractuales, propiedades)
+- Derecho laboral (despidos improcedentes, negociaciones colectivas, indemnizaciones)
+- Mediación y arbitraje (resolución alternativa de conflictos empresariales)
+
+Precios referenciales:
+- Consulta inicial: $50 USD (1 hora, presencial o virtual)
+- Constitución de empresa: desde $500 USD
+- Divorcio de mutuo acuerdo: desde $800 USD
+- Defensa laboral: desde $300 USD
+- Arbitraje empresarial: desde $1,200 USD`,
+    tel:'+1 (809) 555-1234', email:'consultas@roayasociados.com',
+    horario:'Lun-Vie 9am - 6pm', link:'https://wa.me/18095551234',
+    cta:'¿Te gustaría agendar una consulta gratuita de 30 minutos?'
+  },
+  mimi: {
+    nombre:'Mimi', rol:'Asistente de Ventas',
+    tono:'Entusiasta y energético',
+    personalidad:'Soy Mimi, la asistente de ventas más entusiasta que verás 💫 Me especializo en conectar a las personas con los servicios que realmente necesitan. Uso emojis, soy cálida y siempre busco que el cliente se vaya con una sonrisa y con la solución perfecta.',
+    contexto:`Luna Roja Digital — Agencia de IA Conversacional
+- VID: Asistentes IA incrustables en 2 líneas de código
+- Avatares con voz, personalidad y memoria
+- Panel de administración completo
+- Personalización total sin programación
+- Soporte en español, inglés y francés`,
+    tel:'+1 (809) 555-9876', email:'hola@luna-roja-digital.com',
+    horario:'Lun-Dom 8am - 10pm', link:'https://wa.me/18095559876',
+    cta:'¿Quieres ver una demo en vivo de VID en tu sitio?'
+  }
+};
+
+const DEMO_FLOWS = [
+  {
+    trigger:'el usuario pregunta sobre precios o costos',
+    response:'Con mucho gusto te oriento. Los precios varían según el tipo de caso y su complejidad. Te puedo dar una estimación más precisa si me cuentas brevemente tu situación.',
+    pred_yes:'Si el usuario pide más detalles → Compartir el rango de precios del contexto y ofrecer agendar consulta',
+    pred_doubt:'Si el usuario dice que es caro → Explicar el valor de tener asesoría profesional y mencionar la consulta inicial de $50',
+    pred_no:'Si el usuario rechaza → Agradecer y ofrecer información gratuita básica'
+  },
+  {
+    trigger:'el usuario menciona divorcio o separación',
+    response:'Entiendo que es un momento difícil. Puedo orientarte sobre el proceso legal. ¿Es un divorcio de mutuo acuerdo o hay disputas que resolver?',
+    pred_yes:'Si el usuario quiere proceder → Explicar que el divorcio de mutuo acuerdo es más rápido y económico, ofrecer consulta',
+    pred_doubt:'Si el usuario tiene dudas → Explicar que la consulta inicial ayuda a clarificar el proceso y los tiempos',
+    pred_no:'Si el usuario solo quiere información → Dar información general y dejar la puerta abierta'
+  },
+  {
+    trigger:'el usuario pregunta sobre constitución de empresa',
+    response:'¡Excelente paso! Constituir una empresa correctamente desde el inicio ahorra muchos problemas futuros. ¿Qué tipo de negocio tienes en mente?',
+    pred_yes:'Si el usuario quiere avanzar → Explicar los tipos de empresa (SRL, SA, etc.) y pedir info básica para presupuesto',
+    pred_doubt:'Si el usuario pregunta por qué es necesario un abogado → Explicar riesgos de hacerlo sin asesoría',
+    pred_no:'Si el usuario lo quiere hacer solo → Ofrecer revisión del borrador como alternativa más económica'
+  }
+];
+
+const DEMO_KB = [
+  {title:'Consulta inicial gratuita',desc:'Los primeros 15 minutos de consulta son gratuitos para casos nuevos. Aplica para consultas virtuales o presenciales. Solo disponible una vez por cliente.',type:'servicio'},
+  {title:'Horario de atención',desc:'Lunes a viernes de 9:00am a 6:00pm. Sábados de 9:00am a 1:00pm. Citas de emergencia disponibles fuera de horario con recargo del 50%.',type:'info'},
+  {title:'Divorcios',desc:'Tramitamos divorcios de mutuo acuerdo desde $800 USD, con tiempo estimado de 45-90 días. Para casos contenciosos, la tarifa se cotiza según complejidad.',type:'precio'},
+  {title:'Proceso de consulta',desc:'1) Contacto inicial y evaluación gratuita. 2) Propuesta formal con honorarios. 3) Firma de contrato. 4) Inicio de gestión. 5) Reportes periódicos de avance.',type:'proceso'},
+  {title:'¿Trabajan con casos internacionales?',desc:'Sí, manejamos casos con elementos internacionales en colaboración con firmas aliadas en EE.UU., España y Colombia. Se aplica tarifa adicional de coordinación.',type:'faq'},
+  {title:'Método de pago',desc:'Aceptamos transferencia bancaria, tarjeta de crédito/débito y efectivo. Para casos de largo plazo ofrecemos planes de pago.',type:'regla'}
+];
+
+/* ═══ DOCS ALERT ═══════════════════════════════════════════ */
+const DOCS_LABELS = {
+  dashboard:   { title:'Guía del Dashboard',        sub:'Aprende a leer tus métricas' },
+  avatar:      { title:'Guía de Mi Avatar',          sub:'Configura personalidad y flujos' },
+  kb:          { title:'Guía de Base de Conocimiento', sub:'Gestiona lo que sabe tu asistente' },
+  conversations:{ title:'Guía de Conversaciones',   sub:'Explora el historial de chats' },
+  system:      { title:'Guía del Sistema',           sub:'Configuración global y servicios' },
+  users:       { title:'Guía de Usuarios',           sub:'Gestión de cuentas y roles' },
+};
+
+let _alertTimer = null;
+
+function showDocsAlert(sec) {
+  // remove any existing alert
+  const old = document.getElementById('docs-alert-el');
+  if (old) old.remove();
+  clearTimeout(_alertTimer);
+
+  const info = DOCS_LABELS[sec];
+  if (!info) return;
+
+  const el = document.createElement('div');
+  el.id = 'docs-alert-el';
+  el.className = 'docs-alert';
+  el.innerHTML = `
+    <div class="docs-alert-ico">📖</div>
+    <div class="docs-alert-body">
+      <div class="docs-alert-title">${info.title}</div>
+      <div class="docs-alert-sub">${info.sub} — pulsa ❓</div>
+    </div>
+    <div class="docs-alert-arrow"></div>`;
+  document.body.appendChild(el);
+
+  _alertTimer = setTimeout(() => {
+    el.classList.add('hiding');
+    setTimeout(() => el.remove(), 280);
+  }, 3500);
+}
+
+/* ═══ API HELPERS ═══════════════════════════════════════════ */
+function apiHeaders(json=true){
+  const h={'Authorization':S.token?`Bearer ${S.token}`:''};
+  if(json) h['Content-Type']='application/json';
+  return h;
+}
+async function api(method,url,body){
+  const opts={method,headers:apiHeaders()};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  const d=await r.json().catch(()=>({}));
+  return {ok:r.ok,status:r.status,data:d};
+}
+
+/* ═══ TOAST ══════════════════════════════════════════════════ */
+function toast(msg,type='info',ms=3200){
+  const w=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span>${type==='ok'?'✓':type==='err'?'✕':'ℹ'}</span>${msg}`;
+  w.appendChild(t);
+  setTimeout(()=>{t.style.animation='toastOut .3s ease forwards';setTimeout(()=>t.remove(),300);},ms);
+}
+
+/* ═══ AUTH ═══════════════════════════════════════════════════ */
+async function initAuth(){
+  if(!S.token){renderAuthArea(null);return;}
+  const {ok,data}=await api('GET','/api/auth/verify');
+  if(ok&&data.user){S.user=data.user;renderAuthArea(data.user);}
+  else{S.token=null;sessionStorage.removeItem('vid_token');renderAuthArea(null);}
+}
+
+function renderAuthArea(user){
+  const el=document.getElementById('auth-area');
+  const sideUser=document.getElementById('sidebar-user-area');
+  if(!user){
+    el.innerHTML=`<button class="btn-auth" onclick="openModal('auth-modal')">🔐 ${__('iniciarSesion')}</button>`;
+    if(sideUser) sideUser.innerHTML='';
+    document.querySelectorAll('.admin-only-nav').forEach(x=>x.style.display='none');
+    document.getElementById('limit-badge').style.display='none';
+    document.getElementById('btn-reset-av').style.display='none';
+    document.getElementById('conv-admin-actions').style.display='none';
+    return;
+  }
+  const initials=user.name?user.name.substring(0,2).toUpperCase():'?';
+  const roleLabel=user.role==='admin'?'👑 Admin':'👤 '+__('usuario');
+  el.innerHTML=`<div class="user-chip">
+    <div class="user-avatar">${initials}</div>
+    <div><div class="user-name">${user.name}</div><div class="user-role">${roleLabel}</div></div>
+  </div>`;
+  if(sideUser){
+    sideUser.innerHTML=`<div class="user-chip" style="padding:6px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;width:100%">
+      <div class="user-avatar" style="width:26px;height:26px;font-size:10px">${initials}</div>
+      <div style="flex:1;min-width:0"><div class="user-name" style="font-size:12px">${user.name}</div><div class="user-role" style="font-size:10px">${roleLabel}</div></div>
+      <button class="btn-logout" style="padding:4px 8px;font-size:10px" onclick="doLogout()">${__('salir')}</button>
+    </div>`;
+  }
+  if(user.role==='admin'){
+    document.querySelectorAll('.admin-only-nav').forEach(x=>x.style.display='block');
+    document.getElementById('conv-admin-actions').style.display='flex';
+  }
+  document.getElementById('limit-badge').style.display='flex';
+  document.getElementById('btn-reset-av').style.display='inline-flex';
+  loadUserConfigs();
+  checkDailyUsage();
+}
+
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function closeModalOnBg(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+
+function switchAuthTab(tab,el){
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.modal-form').forEach(f=>f.classList.remove('active'));
+  document.getElementById(`form-${tab}`).classList.add('active');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');
+  errEl.classList.add('hidden');
+  const {ok,data}=await api('POST','/api/auth/login',{email,password:pass});
+  if(ok&&data.token){
+    S.token=data.token;S.user=data.user;
+    sessionStorage.setItem('vid_token',data.token);
+    closeModal('auth-modal');
+    renderAuthArea(data.user);
+    toast('Bienvenido, '+data.user.name,'ok');
+    loadSection(S.currentSection);
+  }else{errEl.textContent=data.message||'Error al iniciar sesión';errEl.classList.remove('hidden');}
+}
+
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const errEl=document.getElementById('reg-err');
+  errEl.classList.add('hidden');
+  const {ok,data}=await api('POST','/api/auth/register',{name,email,password:pass});
+  if(ok&&data.token){
+    S.token=data.token;S.user=data.user;
+    sessionStorage.setItem('vid_token',data.token);
+    closeModal('auth-modal');
+    renderAuthArea(data.user);
+    toast('Cuenta creada. ¡Bienvenido/a!','ok');
+    loadSection(S.currentSection);
+  }else{errEl.textContent=data.message||'Error al registrarse';errEl.classList.remove('hidden');}
+}
+
+function doLogout(){
+  S.token=null;S.user=null;
+  sessionStorage.removeItem('vid_token');
+  renderAuthArea(null);
+  toast('Sesión cerrada','info');
+  navigate('dashboard',document.querySelector('[data-section=dashboard]'));
+}
+
+/* ═══ NAVIGATION ═════════════════════════════════════════════ */
+function navigate(sec,el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`sec-${sec}`).classList.add('active');
+  S.currentSection=sec;
+  updateHeadTitle(sec);
+  loadSection(sec);
+  updateDocsContent(sec);
+  showDocsAlert(sec); // ← ÚNICO CAMBIO: alerta de documentación en cada navegación
+}
+
+function updateHeadTitle(sec){
+  const map={
+    dashboard:[__('dashboard'),__('metricas')],
+    avatar:[__('miAvatar'),__('personaliza')],
+    kb:[__('baseConocimiento'),__('gestiona')],
+    conversations:[__('conversaciones'),__('historial')],
+    system:[__('sistema'),__('estado')],
+    users:[__('usuarios'),__('gestionCuentas')]
+  };
+  const [t,s]=map[sec]||[sec,''];
+  document.getElementById('head-title').innerHTML=`${t} <span id="head-subtitle">${s}</span>`;
+}
+
+function loadSection(sec){
+  if(sec==='dashboard') loadDashboard();
+  if(sec==='avatar') loadAvatarSection();
+  if(sec==='kb') loadKb();
+  if(sec==='conversations') loadConversations();
+  if(sec==='system'&&S.user?.role==='admin') loadSystem();
+  if(sec==='users'&&S.user?.role==='admin') loadUsers();
+}
+
+/* ═══ DASHBOARD ══════════════════════════════════════════════ */
+async function loadDashboard(){
+  const {ok,data}=await api('GET','/api/admin/stats');
+  if(!ok) return;
+  const st=data.stats||{};
+  document.getElementById('st-convs').textContent=st.recentConversations??'—';
+  document.getElementById('st-today').textContent=st.todayConversations??'—';
+  document.getElementById('st-users').textContent=st.totalUsers??'—';
+  const chart=document.getElementById('avatar-usage-chart');
+  const naraCount=st.naraConversations??0;
+  const mimiCount=st.mimiConversations??0;
+  const total=naraCount+mimiCount||1;
+  chart.innerHTML=[
+    {id:'nara',emoji:'🧑‍💼',label:'Nara01',count:naraCount,color:'var(--a2)'},
+    {id:'mimi',emoji:'✨',label:'Mimi',count:mimiCount,color:'var(--gold)'}
+  ].map(av=>`<div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+      <span style="color:var(--t2)">${av.emoji} ${av.label}</span>
+      <span style="color:var(--t1);font-weight:600">${av.count}</span>
+    </div>
+    <div class="token-bar-track"><div class="token-bar-fill" style="width:${(av.count/total*100).toFixed(1)}%;background:${av.color}"></div></div>
+  </div>`).join('');
+  checkSystemStatus();
+}
+
+async function checkSystemStatus(){
+  const {ok,data}=await api('GET','/api/admin/system/status');
+  const dot=document.getElementById('sys-dot');
+  const txt=document.getElementById('sys-status-text');
+  if(ok&&data.status==='operational'){
+    dot.className='status-dot ok';txt.textContent='Operativo';
+  } else {
+    dot.className='status-dot err';txt.textContent='Error';
+  }
+}
+
+/* ═══ AVATAR SECTION ═════════════════════════════════════════ */
+async function loadAvatarSection(){
+  const {ok,data}=await api('GET','/api/admin/avatar/configs');
+  if(ok) S.avatarConfigs=data.configs||{};
+  if(S.user) await loadUserConfigs();
+  renderAvatarForm();
+  checkDailyUsage();
+}
+
+async function loadUserConfigs(){
+  if(!S.user||!S.token) return;
+  const {ok,data}=await api('GET','/api/admin/avatar/user-configs');
+  if(ok) S.userConfigs=data.configs||{};
+  renderConfigOrigin();
+}
+
+function switchAvatar(id){
+  S.currentAvatar=id;
+  document.querySelectorAll('.av-chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`av-chip-${id}`).classList.add('active');
+  renderAvatarForm();
+}
+
+function renderAvatarForm(){
+  const av=S.currentAvatar;
+  const userConf=S.userConfigs[av]||{};
+  const globalConf=S.avatarConfigs[av]||{};
+  const demo=DEMO_CONFIG[av];
+  const conf={
+    nombre:      userConf.nombre       || globalConf.nombre       || demo.nombre,
+    rol:         userConf.rol          || globalConf.rol          || demo.rol,
+    tono:        userConf.tono         || globalConf.tono         || demo.tono,
+    personalidad:userConf.personalidad || globalConf.personalidad || demo.personalidad,
+    contexto:    userConf.contexto     || globalConf.contexto     || demo.contexto,
+    tel:         userConf.tel          || globalConf.tel          || demo.tel,
+    email:       userConf.email        || globalConf.email        || demo.email,
+    horario:     userConf.horario      || globalConf.horario      || demo.horario,
+    link:        userConf.link         || globalConf.link         || demo.link,
+    cta:         userConf.cta          || globalConf.cta          || demo.cta,
+    flows:       userConf.flows        || globalConf.flows        || DEMO_FLOWS,
+  };
+  setVal('av-nombre',conf.nombre);
+  setVal('av-rol',conf.rol);
+  setVal('av-tono',conf.tono);
+  setVal('av-personalidad',conf.personalidad);
+  setVal('av-contexto',conf.contexto);
+  setVal('av-tel',conf.tel);
+  setVal('av-email',conf.email);
+  setVal('av-horario',conf.horario);
+  setVal('av-link',conf.link);
+  setVal('av-cta',conf.cta);
+  updateCharCount('av-personalidad','cc-pers',2000);
+  updateCharCount('av-contexto','cc-ctx',4000);
+  updateTokenBar();
+  S.flows=Array.isArray(conf.flows)?[...conf.flows]:[];
+  renderFlows();
+  updatePreview();
+  renderConfigOrigin();
+}
+
+function setVal(id,val){const el=document.getElementById(id);if(el)el.value=val||'';}
+
+function renderConfigOrigin(){
+  const av=S.currentAvatar;
+  const hasUser=S.userConfigs[av]&&Object.keys(S.userConfigs[av]).length>0;
+  const hasGlobal=S.avatarConfigs[av]&&Object.keys(S.avatarConfigs[av]).length>0;
+  const el=document.getElementById('config-origin-display');
+  if(!el) return;
+  let lines=[];
+  if(!S.user) lines.push('🌐 Usando config de demostración (sin sesión)');
+  else if(hasUser) lines.push('<span class="config-origin personal">👤 Tienes una config personal activa</span>');
+  else if(hasGlobal) lines.push('<span class="config-origin">🌐 Usando config global del admin</span>');
+  else lines.push('🌐 Usando datos de demostración');
+  if(S.user&&S.user.role==='admin') lines.push('<br><span class="badge badge-warn" style="margin-top:6px">👑 Vista de administrador</span>');
+  el.innerHTML=lines.join('');
+}
+
+async function checkDailyUsage(){
+  if(!S.user||S.user.role==='admin'){
+    document.getElementById('limit-badge').style.display=S.user?'flex':'none';
+    if(S.user?.role==='admin') document.getElementById('limit-num').textContent='∞';
+    return;
+  }
+  try{
+    const {ok,data}=await api('GET','/api/admin/daily-usage');
+    if(ok) S.dailyUsage=data.count||0;
+  }catch(_){}
+  updateLimitUI();
+}
+
+function updateLimitUI(){
+  const pct=S.dailyUsage/S.dailyLimit*100;
+  document.getElementById('limit-num').textContent=`${S.dailyUsage}/${S.dailyLimit}`;
+  const fill=document.getElementById('limit-bar-fill');
+  fill.style.width=`${pct}%`;
+  fill.className='limit-bar-fill'+(pct>=80?' warn':'');
+  const lock=document.getElementById('av-lock');
+  if(lock) lock.classList.toggle('show',S.dailyUsage>=S.dailyLimit&&S.user?.role!=='admin');
+}
+
+async function saveAvatarConfig(){
+  if(!S.user){openModal('auth-modal');toast('Inicia sesión para guardar','warn');return;}
+  if(S.user.role!=='admin'&&S.dailyUsage>=S.dailyLimit){toast('Límite diario alcanzado (10/10)','warn');return;}
+  const payload={
+    avatarId:S.currentAvatar,
+    nombre:document.getElementById('av-nombre').value,
+    rol:document.getElementById('av-rol').value,
+    tono:document.getElementById('av-tono').value,
+    personalidad:document.getElementById('av-personalidad').value,
+    contexto:document.getElementById('av-contexto').value,
+    tel:document.getElementById('av-tel').value,
+    email:document.getElementById('av-email').value,
+    horario:document.getElementById('av-horario').value,
+    link:document.getElementById('av-link').value,
+    cta:document.getElementById('av-cta').value,
+    flows:S.flows,
+  };
+  const endpoint=S.user.role==='admin'?'/api/admin/avatar/configs':'/api/admin/avatar/user-config';
+  const bodyKey=S.user.role==='admin'?{avatarId:S.currentAvatar,config:payload}:payload;
+  const {ok,data}=await api('PUT',endpoint,bodyKey);
+  if(ok){
+    toast(`Config de ${S.currentAvatar} guardada ✓`,'ok');
+    if(S.user.role!=='admin'){S.dailyUsage++;updateLimitUI();}
+    await loadUserConfigs();
+    renderConfigOrigin();
+  }else{toast(data.message||'Error al guardar','err');}
+}
+
+async function resetAvatarToGlobal(){
+  if(!S.user) return;
+  S.userConfigs[S.currentAvatar]={};
+  renderAvatarForm();
+  toast('Config personal eliminada, mostrando config global','info');
+}
+
+/* Flows */
+function renderFlows(){
+  const c=document.getElementById('flows-container');
+  c.innerHTML='';
+  S.flows.forEach((f,i)=>c.appendChild(createFlowCard(f,i)));
+  document.getElementById('flows-count').textContent=S.flows.length;
+  document.getElementById('btn-add-flow').disabled=S.flows.length>=10;
+}
+
+function createFlowCard(f,idx){
+  const div=document.createElement('div');
+  div.className='flow-card';
+  div.innerHTML=`<div class="flow-header">
+    <span class="flow-num">FLUJO ${idx+1}</span>
+    <button class="btn-icon" onclick="removeFlow(${idx})" title="Eliminar">🗑️</button>
+  </div>
+  <div class="flow-grid">
+    <div><label>🎯 Disparador — Si el usuario menciona…</label>
+    <input type="text" value="${esc(f.trigger||'')}" oninput="updateFlow(${idx},'trigger',this.value)" placeholder="Ej: preguntas sobre precios o costos"></div>
+    <div><label>💬 Respuesta base del asistente</label>
+    <textarea rows="3" oninput="updateFlow(${idx},'response',this.value)" placeholder="Cómo responde inicialmente tu asistente…">${esc(f.response||'')}</textarea></div>
+  </div>
+  <div class="flow-preds">
+    <div class="flow-pred-item pred-yes"><label>Si el usuario está INTERESADO →</label>
+    <textarea rows="2" oninput="updateFlow(${idx},'pred_yes',this.value)" placeholder="Informar y empujar a contacto…">${esc(f.pred_yes||'')}</textarea></div>
+    <div class="flow-pred-item pred-doubt"><label>Si el usuario tiene DUDAS →</label>
+    <textarea rows="2" oninput="updateFlow(${idx},'pred_doubt',this.value)" placeholder="Argumentar y ofrecer consulta gratis…">${esc(f.pred_doubt||'')}</textarea></div>
+    <div class="flow-pred-item pred-no"><label>Si el usuario RECHAZA →</label>
+    <textarea rows="2" oninput="updateFlow(${idx},'pred_no',this.value)" placeholder="Cambiar tema / cortar elegantemente…">${esc(f.pred_no||'')}</textarea></div>
+  </div>`;
+  return div;
+}
+
+function addFlow(){if(S.flows.length>=10){toast('Límite de 10 flujos alcanzado','warn');return;}S.flows.push({trigger:'',response:'',pred_yes:'',pred_doubt:'',pred_no:''});renderFlows();}
+function removeFlow(i){S.flows.splice(i,1);renderFlows();}
+function updateFlow(i,key,val){if(S.flows[i])S.flows[i][key]=val;}
+function loadExampleFlow(){if(S.flows.length===0)S.flows=DEMO_FLOWS.slice(0,1);else S.flows.push(DEMO_FLOWS[S.flows.length%DEMO_FLOWS.length]);renderFlows();toast('Flujo de ejemplo cargado','info');}
+
+function updatePreview(){
+  const meta=AVATARS_META[S.currentAvatar];
+  const nombre=document.getElementById('av-nombre')?.value||meta.name;
+  const rol=document.getElementById('av-rol')?.value||'Asistente virtual';
+  const pers=document.getElementById('av-personalidad')?.value||'';
+  document.getElementById('prev-emoji').textContent=meta.emoji;
+  document.getElementById('prev-name').textContent=nombre;
+  document.getElementById('prev-role').textContent=rol;
+  document.getElementById('prev-pbname').textContent=nombre;
+  const preview=pers?pers.substring(0,140)+'…':meta.greet;
+  document.getElementById('prev-text').textContent=preview;
+}
+
+function generatePreview(){
+  const el=document.getElementById('prev-text');
+  const pers=document.getElementById('av-personalidad')?.value||'';
+  const cta=document.getElementById('av-cta')?.value||'';
+  el.innerHTML='<span class="preview-cursor"></span>';
+  const msg=cta||pers.substring(0,120)+'…'||AVATARS_META[S.currentAvatar].greet;
+  let i=0;
+  const interval=setInterval(()=>{
+    if(i<=msg.length){el.innerHTML=msg.substring(0,i)+'<span class="preview-cursor"></span>';i++;}
+    else{el.textContent=msg;clearInterval(interval);}
+  },18);
+}
+
+function updateCharCount(inputId,counterId,max){
+  const len=document.getElementById(inputId)?.value.length||0;
+  const el=document.getElementById(counterId);
+  if(!el) return;
+  el.textContent=`${len}/${max}`;
+  el.className='char-counter'+(len/max>=1?' over':len/max>=.85?' warn':'');
+}
+
+function updateTokenBar(){
+  const ctx=document.getElementById('av-contexto')?.value||'';
+  const len=ctx.length;
+  const fill=document.getElementById('tk-fill');
+  const lbl=document.getElementById('tk-used');
+  if(!fill||!lbl) return;
+  const pct=Math.min(len/4000*100,100);
+  fill.style.width=pct+'%';
+  fill.className='token-bar-fill'+(pct>=100?' over':pct>=80?' near':'');
+  lbl.textContent=`${len.toLocaleString()} chars usados`;
+}
+
+/* ═══ KNOWLEDGE BASE ═════════════════════════════════════════ */
+async function loadKb(){
+  const {ok,data}=await api('GET','/api/memory/projects');
+  if(ok&&data.projects){
+    S.kb=data.projects;
+  } else if(ok&&data.memoriaProyectos?.proyectos){
+    S.kb=data.memoriaProyectos.proyectos.map(p=>({title:p.nombre,desc:p.descripcion,type:p.tipo||'info'}));
+  } else {
+    const r2=await api('GET','/api/admin/agent/memory');
+    S.kb=S.kb.length?S.kb:DEMO_KB;
+  }
+  if(!S.kb.length) S.kb=[...DEMO_KB];
+  renderKb();
+}
+
+function renderKb(){
+  const el=document.getElementById('kb-list');
+  const count=S.kb.length;
+  document.getElementById('kb-count-label').innerHTML=`<strong>${count}</strong> de 20 items usados`;
+  const tokens=Math.round(S.kb.reduce((a,x)=>a+(x.desc||'').length+(x.title||'').length,0)/4);
+  document.getElementById('kb-token-est').textContent=`~${tokens.toLocaleString()} tokens estimados`;
+  document.getElementById('kb-bar').style.width=`${Math.min(count/20*100,100)}%`;
+  if(!count){el.innerHTML='<div class="kb-empty">📭 Sin items. Añade tu primer item de conocimiento.</div>';return;}
+  el.innerHTML=S.kb.map((item,i)=>`
+    <div class="kb-item">
+      <div class="kb-item-type">${item.type||'info'}</div>
+      <div class="kb-item-body">
+        <div class="kb-item-title">${esc(item.title||'')}</div>
+        <div class="kb-item-desc">${esc(item.desc||item.descripcion||'')}</div>
+      </div>
+      <div class="kb-item-actions">
+        <button class="btn-icon" onclick="openKbModal(${i})" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="deleteKbItem(${i})" title="Eliminar">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function openKbModal(idx){
+  const isNew=idx===null;
+  document.getElementById('kb-modal-title').textContent=isNew?'Añadir item':'Editar item';
+  document.getElementById('kb-edit-idx').value=isNew?'':idx;
+  const item=isNew?{}:S.kb[idx];
+  setVal('kb-title',item.title||item.nombre||'');
+  setVal('kb-desc',item.desc||item.descripcion||'');
+  setVal('kb-type',item.type||'info');
+  openModal('kb-modal');
+}
+
+async function saveKbItem(){
+  const idx=document.getElementById('kb-edit-idx').value;
+  const item={title:document.getElementById('kb-title').value,desc:document.getElementById('kb-desc').value,type:document.getElementById('kb-type').value};
+  if(!item.title.trim()){toast('El título es requerido','warn');return;}
+  if(idx===''){
+    if(S.kb.length>=20){toast('Límite de 20 items alcanzado','warn');return;}
+    S.kb.push(item);
+  } else {
+    S.kb[parseInt(idx)]=item;
+  }
+  await persistKb();
+  closeModal('kb-modal');
+  renderKb();
+}
+
+function deleteKbItem(i){
+  confirm_action('¿Eliminar este item?','Esta acción no se puede deshacer.',async()=>{
+    S.kb.splice(i,1);await persistKb();renderKb();toast('Item eliminado','ok');
+  });
+}
+
+async function persistKb(){
+  const proyectos=S.kb.map(x=>({nombre:x.title,descripcion:x.desc,tipo:x.type}));
+  const {ok}=await api('PUT','/api/admin/agent/memory',{memoriaProyectos:{proyectos}});
+  if(ok) toast('Base de conocimiento guardada','ok');
+  else toast('Guardado localmente (sin sesión admin)','warn');
+}
+
+/* ═══ CONVERSATIONS ══════════════════════════════════════════ */
+async function loadConversations(){
+  const endpoint=S.user?.role==='admin'?'/api/admin/conversations?pageSize=50':'/api/conversations?limit=50';
+  const {ok,data}=await api('GET',endpoint);
+  S.convAll=(data.conversations||data.data||[]);
+  S.conversations=[...S.convAll];
+  renderConvTable(S.conversations);
+}
+
+function filterConversations(){
+  const q=document.getElementById('conv-search').value.toLowerCase();
+  S.conversations=q?S.convAll.filter(c=>(c.sessionId||'').includes(q)||(JSON.stringify(c.messages||[])).toLowerCase().includes(q)):S.convAll;
+  renderConvTable(S.conversations);
+}
+
+function renderConvTable(convs){
+  const tbody=document.getElementById('conv-tbody');
+  if(!convs.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><div class="es-ico">💬</div><p>Sin conversaciones aún.</p></td></tr>';return;}
+  tbody.innerHTML=convs.map(c=>{
+    const date=new Date(c.createdAt||c.created_at||Date.now()).toLocaleDateString('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const msgs=c.messages||[];
+    const preview=msgs[0]?.content?.substring(0,60)||'—';
+    const sid=(c.sessionId||c.session_id||'').substring(0,12)+'…';
+    const avName=AVATARS_META[c.avatarId||c.avatar_id]?.name||c.avatarId||'—';
+    return `<tr>
+      <td style="font-family:var(--font-h);font-size:11px;color:var(--t3)">${sid}</td>
+      <td>${avName}</td>
+      <td style="text-align:center">${msgs.length}</td>
+      <td style="font-size:12px;color:var(--t3)">${date}</td>
+      <td class="conv-preview">${esc(preview)}</td>
+      <td><button class="conv-expand" onclick="expandConv(this,'${c.sessionId||c.session_id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function expandConv(btn,sessionId){
+  let row=btn.closest('tr');
+  let detail=row.nextElementSibling?.querySelector?.('.conv-detail');
+  if(detail){detail.classList.toggle('open');btn.textContent=detail.classList.contains('open')?'Cerrar':'Ver';return;}
+  const {ok,data}=await api('GET',`/api/conversations/${sessionId}`);
+  const msgs=(data.conversation?.messages||[]);
+  const newRow=document.createElement('tr');
+  newRow.innerHTML=`<td colspan="6" style="padding:0 8px 12px">
+    <div class="conv-detail open" style="display:block">${msgs.map(m=>`<div class="conv-msg">
+      <div class="conv-msg-role ${m.role}">${m.role==='user'?'👤 Usuario':'🤖 Asistente'}</div>
+      <div>${esc(m.content||'')}</div>
+    </div>`).join('')||'<div style="color:var(--t4);font-size:12px;padding:10px">Sin mensajes</div>'}</div>
+  </td>`;
+  row.after(newRow);
+  btn.textContent='Cerrar';
+}
+
+function clearAllConversations(){
+  confirm_action('¿Eliminar TODAS las conversaciones?','Esta acción no se puede deshacer y eliminará el historial completo.',async()=>{
+    const {ok}=await api('DELETE','/api/admin/conversations/clear');
+    if(ok){S.convAll=[];S.conversations=[];renderConvTable([]);toast('Conversaciones eliminadas','ok');}
+    else toast('Error al eliminar','err');
+  });
+}
+
+/* ═══ SYSTEM ══════════════════════════════════════════════════ */
+async function loadSystem(){
+  const [{ok:ok1,data:d1},{ok:ok2,data:d2}]=await Promise.all([
+    api('GET','/api/admin/system/status'),
+    api('GET','/api/admin/stats')
+  ]);
+  const services=[
+    {ico:'🤖',name:'Groq AI',detail:'LLM principal',status:ok1?'ok':'err'},
+    {ico:'🔊',name:'Google TTS',detail:'Síntesis de voz',status:(d1?.data?.tts||ok1)?'ok':'off'},
+    {ico:'🗄️',name:'SQLite DB',detail:`${d2?.stats?.totalConversations||0} conversaciones`,status:'ok'},
+    {ico:'🔐',name:'JWT Auth',detail:'Tokens activos',status:'ok'},
+    {ico:'🔄',name:'DeepSeek',detail:'Fallback IA',status:'off'},
+    {ico:'📨',name:'Telegram',detail:'Notificaciones',status:'off'},
+  ];
+  document.getElementById('services-grid').innerHTML=services.map(s=>`
+    <div class="service-card">
+      <div class="service-icon">${s.ico}</div>
+      <div class="service-body">
+        <h4>${s.name} <span class="badge ${s.status==='ok'?'badge-ok':s.status==='err'?'badge-err':'badge-warn'}">${s.status==='ok'?'Online':s.status==='err'?'Error':'Inactivo'}</span></h4>
+        <p>${s.detail}</p>
+      </div>
+    </div>`).join('');
+  renderGlobalConfigForm(S.globalTabAvatar);
+}
+
+function switchGlobalTab(av,el){
+  S.globalTabAvatar=av;
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderGlobalConfigForm(av);
+}
+
+function renderGlobalConfigForm(av){
+  const conf=S.avatarConfigs[av]||DEMO_CONFIG[av]||{};
+  document.getElementById('global-config-form').innerHTML=`
+    <div class="form-row row2">
+      <div><label>Nombre</label><input type="text" id="gc-nombre" value="${esc(conf.nombre||'')}"></div>
+      <div><label>Rol / Título</label><input type="text" id="gc-rol" value="${esc(conf.rol||'')}"></div>
+    </div>
+    <div class="form-row">
+      <label>Tono</label>
+      <select id="gc-tono">
+        ${['Profesional y amigable','Formal y preciso','Cercano y empático','Entusiasta y energético','Técnico y detallista','Casual y relajado']
+          .map(t=>`<option${t===(conf.tono||'Profesional y amigable')?' selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Personalidad global</label>
+      <textarea id="gc-personalidad" rows="5">${esc(conf.personalidad||'')}</textarea>
+    </div>`;
+}
+
+async function saveGlobalConfig(){
+  if(!S.user||S.user.role!=='admin'){toast('Solo el admin puede modificar la config global','warn');return;}
+  const payload={
+    avatarId:S.globalTabAvatar,
+    config:{
+      nombre:document.getElementById('gc-nombre').value,
+      rol:document.getElementById('gc-rol').value,
+      tono:document.getElementById('gc-tono').value,
+      personalidad:document.getElementById('gc-personalidad').value,
+    }
+  };
+  const {ok,data}=await api('PUT','/api/admin/avatar/configs',payload);
+  if(ok){toast('Config global actualizada','ok');S.avatarConfigs[S.globalTabAvatar]=payload.config;}
+  else toast(data.message||'Error','err');
+}
+
+async function reloadMemory(){
+  const {ok}=await api('POST','/api/memory/recargar',{});
+  toast(ok?'Memoria recargada correctamente':'Error al recargar memoria',ok?'ok':'err');
+}
+
+/* ═══ USERS ═══════════════════════════════════════════════════ */
+async function loadUsers(){
+  const {ok,data}=await api('GET','/api/auth/users');
+  const tbody=document.getElementById('users-tbody');
+  if(!ok){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:20px">Sin acceso</td></tr>';return;}
+  const users=data.users||[];
+  if(!users.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><div class="es-ico">👥</div><p>No hay usuarios registrados.</p></td></tr>';return;}
+  tbody.innerHTML=users.map(u=>`<tr>
+    <td><strong>${esc(u.name||'')}</strong></td>
+    <td style="font-size:12px;color:var(--t3)">${esc(u.email||'')}</td>
+    <td><span class="badge ${u.role==='admin'?'badge-warn':'badge-info'}">${u.role==='admin'?'👑 Admin':'👤 Usuario'}</span></td>
+    <td style="font-size:12px;color:var(--t3)">${u.createdAt?new Date(u.createdAt).toLocaleDateString('es-ES'):'—'}</td>
+    <td style="font-size:12px;color:var(--t3)">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString('es-ES'):'Nunca'}</td>
+    <td><span class="badge badge-ok">Activo</span></td>
+  </tr>`).join('');
+}
+
+/* ═══ CONFIRM HELPER ══════════════════════════════════════════ */
+function confirm_action(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('btn-confirm-ok').onclick=()=>{closeModal('confirm-modal');cb();};
+  openModal('confirm-modal');
+}
+
+/* ═══ DOCS DRAWER ═════════════════════════════════════════════ */
+const DOCS={
+  dashboard:`<div class="doc-section"><h5>📊 Dashboard</h5><p>Métricas en tiempo real de tu asistente. Conversaciones totales incluyen todas las sesiones históricas.</p><div class="doc-tip"><strong>Consejo:</strong> Usa la vista de Conversaciones para ver qué preguntan tus visitantes y mejorar tu base de conocimiento.</div></div>`,
+  avatar:`<div class="doc-section"><h5>🧠 Personalidad</h5><p>Define quién es tu asistente, su misión y cómo habla. Cuanto más específico seas, mejor será su comportamiento.</p><div class="doc-tip"><strong>Límite Groq:</strong> ~4,000 chars de contexto (modelo rápido gratuito). <strong>DeepSeek:</strong> ilimitado (~1M tokens).</div></div>
+  <div class="doc-section"><h5>⚡ Flujos predictivos</h5><p>Característica única de VID. No solo respondes: <em>anticipas</em> las 3 reacciones posibles del usuario (interesado, dudoso, negativo) y preparas al asistente para cada escenario.</p><div class="doc-tip">Un bufete con 3 flujos bien configurados convierte 3× más que uno con respuestas genéricas.</div></div>
+  <div class="doc-section"><h5>💾 Guardar cambios</h5><p>Usuarios registrados pueden personalizar su propio avatar. Cada usuario tiene su propia capa de configuración sobre la global del admin. Límite: <strong>10 guardados por día</strong> (protege el modelo gratuito).</p></div>`,
+  kb:`<div class="doc-section"><h5>📚 Base de conocimiento</h5><p>Todo lo que añades aquí se convierte en contexto para el LLM. Precios, servicios, FAQ, procesos.</p><div class="doc-tip"><strong>Recomendación:</strong> 5-15 items bien detallados son más efectivos que 20 items vagos. El modelo lee todo en cada respuesta.</div></div>
+  <div class="doc-section"><h5>🧮 Estimación de tokens</h5><p>Cada 4 chars ≈ 1 token. Groq soporta bien hasta ~1,000 tokens de conocimiento. Más de eso puede afectar la velocidad de respuesta.</p></div>`,
+  conversations:`<div class="doc-section"><h5>💬 Conversaciones</h5><p>Historial completo de todos los chats. Úsalo para entender qué preguntan tus visitantes y optimizar la base de conocimiento.</p><div class="doc-tip">Si ves preguntas repetidas sin respuesta, ¡añádelas a la base de conocimiento!</div></div>`,
+  system:`<div class="doc-section"><h5>⚙️ Configuración global</h5><p>Como admin, tu configuración aquí es la base que todos los usuarios ven por defecto. Los usuarios pueden personalizarla encima, pero si borra su config, vuelve a la tuya.</p><div class="doc-tip">La config global es ideal para el caso de demostración: el bufete de abogados que muestra el potencial del sistema.</div></div>`,
+  users:`<div class="doc-section"><h5>👥 Usuarios</h5><p>Lista de todos los usuarios registrados. Los usuarios no-admin pueden personalizar su avatar pero no tienen acceso a la configuración global ni al sistema.</p></div>`,
+};
+
+function toggleDocs(){
+  const d=document.getElementById('docs-drawer');
+  const o=document.getElementById('docs-overlay');
+  const isOpen=d.classList.contains('open');
+  d.classList.toggle('open',!isOpen);
+  o.classList.toggle('open',!isOpen);
+  if(!isOpen) updateDocsContent(S.currentSection);
+}
+
+function updateDocsContent(sec){
+  document.getElementById('docs-title').textContent=`📖 Guía — ${({dashboard:'Dashboard',avatar:'Mi Avatar',kb:'Base de Conocimiento',conversations:'Conversaciones',system:'Sistema',users:'Usuarios'})[sec]||sec}`;
+  document.getElementById('docs-body').innerHTML=DOCS[sec]||'<p style="color:var(--t3);font-size:13px">Selecciona una sección para ver la documentación.</p>';
+}
+
+/* ═══ UTILS ═══════════════════════════════════════════════════ */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ═══ MOBILE NAV SYNC ════════════════════════════════════════ */
+function mobNavSync(sec){
+  document.querySelectorAll('.mob-nav-item').forEach(b=>{
+    b.classList.toggle('active',b.dataset.section===sec);
+  });
+}
+
+/* ═══ CLEANUP COUNTDOWN ═════════════════════════════════════ */
+let _countdownSec = 0;
+function startCleanupCountdown() {
+  _countdownSec = 600;
+  const el = document.getElementById('cleanup-timer');
+  if (!el) return;
+  function tick() {
+    if (_countdownSec <= 0) _countdownSec = 600;
+    const m = String(Math.floor(_countdownSec / 60)).padStart(2, '0');
+    const s = String(_countdownSec % 60).padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+    _countdownSec--;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+function showCleanupInfo() {
+  toast(__('cleanupInfoMsg') || 'Los mensajes se borran automáticamente cada 10 minutos', 'info', 4000);
+}
+
+/* ═══ INIT ════════════════════════════════════════════════════ */
+(async function init(){
+  applyI18n();
+  startCleanupCountdown();
+  await initAuth();
+  loadDashboard();
+  checkSystemStatus();
+  api('GET','/api/admin/avatar/configs').then(({ok,data})=>{
+    if(ok) S.avatarConfigs=data.configs||{};
+  });
+})();
+</script>
+</body>
+</html>
