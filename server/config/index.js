@@ -19,7 +19,11 @@ const OPTIONAL_ENV_VARS = [
   'GOOGLE_APPLICATION_CREDENTIALS',
   'NODE_ENV',
   'ADMIN_URL',
-  'ALLOWED_ORIGINS'
+  'ALLOWED_ORIGINS',
+  // ── CAMBIO: nuevas variables opcionales de OpenAI ──
+  'OPENAI_API_KEY',
+  'OPENAI_TTS_MODEL',
+  'OPENAI_LLM_MODEL'
 ];
 
 const VALID_AVATARS = ['nara', 'mimi', 'ava03', 'vid'];
@@ -68,6 +72,15 @@ const deepseekConfig = {
   model: process.env.DEEPSEEK_MODEL || 'deepseek-chat'
 };
 
+// ── CAMBIO: bloque de configuración de OpenAI (totalmente opcional) ──
+// El servidor arranca normalmente si estas variables no están definidas.
+// openaiService.isAvailable() comprobará en runtime si la key es válida.
+const openaiConfig = {
+  apiKey: process.env.OPENAI_API_KEY || null,
+  ttsModel: process.env.OPENAI_TTS_MODEL || 'tts-1-hd',
+  llmModel: process.env.OPENAI_LLM_MODEL || 'gpt-4.1-mini'
+};
+
 const adminConfig = {
   email: process.env.ADMIN_EMAIL,
   url: process.env.ADMIN_URL || 'http://localhost:3000/admin'
@@ -78,6 +91,8 @@ const config = {
   server: serverConfig,
   tts: ttsConfig,
   deepseek: deepseekConfig,
+  // ── CAMBIO: exportar openaiConfig junto al resto ──
+  openai: openaiConfig,
   admin: adminConfig,
   validAvatars: VALID_AVATARS,
   validateEnv

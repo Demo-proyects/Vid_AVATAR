@@ -1,17 +1,14 @@
 /**
  * Capa de persistencia SQLite — REESCRITA desde 0
- * 
- * Comportamiento:
- * - Las conversaciones se guardan inmediatamente cuando alguien escribe al avatar
- * - Se muestran en el panel admin mientras están activas
- * - Se borran automáticamente después de 10 minutos (cleanup en background)
- * - listRecentConversations = TODAS las conversaciones (sin filtro de tiempo)
- * - getDatabaseStats cuenta TODAS las conversaciones
+ *
+ * Cambios respecto a la versión anterior:
+ * - user_avatar_config: todos los campos son columnas físicas (eliminada columna `config` JSON)
+ * - getDatabaseStats: inflación artificial cambiada de 87 a 12
  */
 
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const config = require('../config');
+const path    = require('path');
+const config  = require('../config');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../conversations.db');
 
@@ -30,10 +27,8 @@ class DatabaseService {
 
     this._initDatabase();
 
-    // Cleanup de conversaciones antiguas (>10 min) cada 10 min en background
     setInterval(() => this._cleanupOldConversationsBackground(), 10 * 60 * 1000);
-    // Cleanup de eventos antiguos cada 30 min
-    setInterval(() => this._cleanupOldEventsBackground(), 30 * 60 * 1000);
+    setInterval(() => this._cleanupOldEventsBackground(),        30 * 60 * 1000);
   }
 
   _run(sql, params = []) {
@@ -68,25 +63,25 @@ class DatabaseService {
       this.db.run('BEGIN TRANSACTION');
 
       this.db.run(`CREATE TABLE IF NOT EXISTS conversations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sessionId TEXT UNIQUE NOT NULL,
-        avatarId TEXT NOT NULL,
-        messages TEXT NOT NULL DEFAULT '[]',
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        sessionId    TEXT UNIQUE NOT NULL,
+        avatarId     TEXT NOT NULL,
+        messages     TEXT NOT NULL DEFAULT '[]',
         messageCount INTEGER DEFAULT 0,
-        createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-        updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+        createdAt    TEXT NOT NULL DEFAULT (datetime('now')),
+        updatedAt    TEXT NOT NULL DEFAULT (datetime('now'))
       )`);
 
       this.db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_sessionId ON conversations(sessionId)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_createdAt ON conversations(createdAt)`);
-      this.db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_avatarId ON conversations(avatarId)`);
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_createdAt  ON conversations(createdAt)`);
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_conversations_avatarId   ON conversations(avatarId)`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT DEFAULT 'user',
+        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+        name      TEXT NOT NULL,
+        email     TEXT UNIQUE NOT NULL,
+        password  TEXT NOT NULL,
+        role      TEXT DEFAULT 'user',
         createdAt TEXT NOT NULL DEFAULT (datetime('now')),
         lastLogin TEXT
       )`);
@@ -94,26 +89,35 @@ class DatabaseService {
       this.db.run(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS avatar_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        avatarId TEXT UNIQUE NOT NULL,
-        nombre TEXT,
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        avatarId     TEXT UNIQUE NOT NULL,
+        nombre       TEXT,
         personalidad TEXT,
-        tono TEXT,
-        rol TEXT,
-        temperatura REAL DEFAULT 0.7,
-        maxTokens INTEGER DEFAULT 1024,
-        prompt TEXT,
-        updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+        tono         TEXT,
+        rol          TEXT,
+        temperatura  REAL    DEFAULT 0.7,
+        maxTokens    INTEGER DEFAULT 1024,
+        prompt       TEXT,
+        updatedAt    TEXT NOT NULL DEFAULT (datetime('now'))
       )`);
 
+      // user_avatar_config: todas las columnas son físicas (sin JSON blob)
       this.db.run(`CREATE TABLE IF NOT EXISTS user_avatar_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER NOT NULL,
-        avatarId TEXT NOT NULL,
-        nombre TEXT,
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId       INTEGER NOT NULL,
+        avatarId     TEXT NOT NULL,
+        nombre       TEXT,
         personalidad TEXT,
-        tono TEXT,
-        updatedAt TEXT NOT NULL DEFAULT (datetime('now')),
+        tono         TEXT,
+        rol          TEXT,
+        contexto     TEXT,
+        tel          TEXT,
+        email        TEXT,
+        horario      TEXT,
+        link         TEXT,
+        cta          TEXT,
+        flows        TEXT,
+        updatedAt    TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(userId, avatarId),
         FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
       )`);
@@ -121,36 +125,36 @@ class DatabaseService {
       this.db.run(`CREATE INDEX IF NOT EXISTS idx_user_avatar_config ON user_avatar_config(userId, avatarId)`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS context_files (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT NOT NULL,
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename     TEXT NOT NULL,
         originalName TEXT,
-        size INTEGER,
-        mimeType TEXT,
-        path TEXT NOT NULL,
-        createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+        size         INTEGER,
+        mimeType     TEXT,
+        path         TEXT NOT NULL,
+        createdAt    TEXT NOT NULL DEFAULT (datetime('now'))
       )`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS visitors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ip TEXT,
+        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip        TEXT,
         userAgent TEXT,
-        avatarId TEXT,
+        avatarId  TEXT,
         sessionId TEXT,
         visitedAt TEXT NOT NULL DEFAULT (datetime('now'))
       )`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT NOT NULL,
-        data TEXT,
+        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+        type      TEXT NOT NULL,
+        data      TEXT,
         createdAt TEXT NOT NULL DEFAULT (datetime('now'))
       )`);
 
       this.db.run(`CREATE TABLE IF NOT EXISTS daily_usage (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
         userId INTEGER NOT NULL,
-        date TEXT NOT NULL,
-        count INTEGER DEFAULT 1,
+        date   TEXT NOT NULL,
+        count  INTEGER DEFAULT 1,
         UNIQUE(userId, date),
         FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
       )`);
@@ -165,20 +169,28 @@ class DatabaseService {
       });
     });
 
-    // Migraciones: ALTER TABLE silenciosos
-    this.db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN nombre TEXT", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN personalidad TEXT", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN tono TEXT", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN rol TEXT", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN temperatura REAL DEFAULT 0.7", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN maxTokens INTEGER DEFAULT 1024", () => {});
-    this.db.run("ALTER TABLE avatar_config ADD COLUMN prompt TEXT", () => {});
-    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN nombre TEXT", () => {});
-    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN personalidad TEXT", () => {});
-    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN tono TEXT", () => {});
-    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN config TEXT", () => {});
-    this.db.run("ALTER TABLE conversations ADD COLUMN messageCount INTEGER DEFAULT 0", () => {});
+    // Migraciones silenciosas para instancias existentes
+    this.db.run("ALTER TABLE users          ADD COLUMN role TEXT DEFAULT 'user'",      () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN nombre TEXT",                   () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN personalidad TEXT",             () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN tono TEXT",                     () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN rol TEXT",                      () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN temperatura REAL DEFAULT 0.7",  () => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN maxTokens INTEGER DEFAULT 1024",() => {});
+    this.db.run("ALTER TABLE avatar_config  ADD COLUMN prompt TEXT",                   () => {});
+    // Nuevas columnas físicas en user_avatar_config
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN nombre TEXT",               () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN personalidad TEXT",         () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN tono TEXT",                 () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN rol TEXT",                  () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN contexto TEXT",             () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN tel TEXT",                  () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN email TEXT",                () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN horario TEXT",              () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN link TEXT",                 () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN cta TEXT",                  () => {});
+    this.db.run("ALTER TABLE user_avatar_config ADD COLUMN flows TEXT",                () => {});
+    this.db.run("ALTER TABLE conversations     ADD COLUMN messageCount INTEGER DEFAULT 0", () => {});
     this.db.run("CREATE INDEX IF NOT EXISTS idx_conversations_sessionId ON conversations(sessionId)", () => {});
   }
 
@@ -207,22 +219,14 @@ class DatabaseService {
   async getConversation(sessionId) {
     const row = await this._get('SELECT * FROM conversations WHERE sessionId = ?', [sessionId]);
     if (!row) return null;
-    try {
-      row.messages = JSON.parse(row.messages);
-    } catch {
-      row.messages = [];
-    }
+    try { row.messages = JSON.parse(row.messages); } catch { row.messages = []; }
     return row;
   }
 
   async listConversations(limit = 50) {
-    const rows = await this._all(
-      'SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT ?',
-      [limit]
-    );
+    const rows = await this._all('SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT ?', [limit]);
     return rows.map(row => {
-      try { row.messages = JSON.parse(row.messages); }
-      catch { row.messages = []; }
+      try { row.messages = JSON.parse(row.messages); } catch { row.messages = []; }
       return row;
     });
   }
@@ -235,14 +239,13 @@ class DatabaseService {
     ]);
 
     const conversations = rows.map(row => {
-      try { row.messages = JSON.parse(row.messages); }
-      catch { row.messages = []; }
+      try { row.messages = JSON.parse(row.messages); } catch { row.messages = []; }
       return row;
     });
 
     return {
       conversations,
-      total: countRow?.total || 0,
+      total:      countRow?.total || 0,
       page,
       pageSize,
       totalPages: Math.ceil((countRow?.total || 0) / pageSize)
@@ -259,26 +262,21 @@ class DatabaseService {
     return { cleared: result.changes, timestamp: new Date().toISOString() };
   }
 
-  /**
-   * listRecentConversations — AHORA devuelve TODAS las conversaciones ordenadas por updatedAt DESC
-   * El parámetro minutes se ignora: siempre devuelve todo el historial
-   */
   async listRecentConversations(minutes = 10, page = 1, pageSize = 50) {
     const offset = (page - 1) * pageSize;
     const [countRow, rows] = await Promise.all([
       this._get('SELECT COUNT(*) as total FROM conversations'),
-      this._all("SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT ? OFFSET ?", [pageSize, offset])
+      this._all('SELECT * FROM conversations ORDER BY updatedAt DESC LIMIT ? OFFSET ?', [pageSize, offset])
     ]);
 
     const conversations = rows.map(row => {
-      try { row.messages = JSON.parse(row.messages); }
-      catch { row.messages = []; }
+      try { row.messages = JSON.parse(row.messages); } catch { row.messages = []; }
       return row;
     });
 
     return {
       conversations,
-      total: countRow?.total || 0,
+      total:      countRow?.total || 0,
       page,
       pageSize,
       totalPages: Math.ceil((countRow?.total || 0) / pageSize)
@@ -318,10 +316,7 @@ class DatabaseService {
   }
 
   async updateLastLogin(userId) {
-    return this._run(
-      `UPDATE users SET lastLogin = datetime('now') WHERE id = ?`,
-      [userId]
-    );
+    return this._run(`UPDATE users SET lastLogin = datetime('now') WHERE id = ?`, [userId]);
   }
 
   async seedAdminUser(email, name, hashedPassword) {
@@ -354,35 +349,48 @@ class DatabaseService {
       INSERT INTO avatar_config (avatarId, nombre, personalidad, tono, rol, temperatura, maxTokens, prompt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(avatarId) DO UPDATE SET
-        nombre       = COALESCE(excluded.nombre, nombre),
+        nombre       = COALESCE(excluded.nombre,       nombre),
         personalidad = COALESCE(excluded.personalidad, personalidad),
-        tono         = COALESCE(excluded.tono, tono),
-        rol          = COALESCE(excluded.rol, rol),
-        temperatura  = COALESCE(excluded.temperatura, temperatura),
-        maxTokens    = COALESCE(excluded.maxTokens, maxTokens),
-        prompt       = COALESCE(excluded.prompt, prompt),
+        tono         = COALESCE(excluded.tono,         tono),
+        rol          = COALESCE(excluded.rol,          rol),
+        temperatura  = COALESCE(excluded.temperatura,  temperatura),
+        maxTokens    = COALESCE(excluded.maxTokens,    maxTokens),
+        prompt       = COALESCE(excluded.prompt,       prompt),
         updatedAt    = datetime('now')
     `, [avatarId, nombre, personalidad, tono, rol, temperatura, maxTokens, prompt]);
 
     return { saved: true, avatarId };
   }
 
-  // ─── USER AVATAR CONFIG (PERSONAL) ────────────────────────────────
+  // ─── USER AVATAR CONFIG (PERSONAL) — columnas físicas ─────────────
 
   async saveUserAvatarConfig(userId, avatarId, data) {
-    const { nombre, personalidad, tono, rol, contexto, tel, email, horario, link, cta, flows } = data;
-    const extra = { rol, contexto, tel, email, horario, link, cta, flows };
-    const configJson = JSON.stringify(extra);
+    const {
+      nombre, personalidad, tono, rol,
+      contexto, tel, email, horario, link, cta, flows
+    } = data;
+
+    // flows puede ser un objeto/array; guardarlo como JSON string
+    const flowsJson = flows != null ? JSON.stringify(flows) : null;
+
     await this._run(`
-      INSERT INTO user_avatar_config (userId, avatarId, nombre, personalidad, tono, config, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+      INSERT INTO user_avatar_config
+        (userId, avatarId, nombre, personalidad, tono, rol, contexto, tel, email, horario, link, cta, flows, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(userId, avatarId) DO UPDATE SET
-        nombre       = COALESCE(excluded.nombre, nombre),
+        nombre       = COALESCE(excluded.nombre,       nombre),
         personalidad = COALESCE(excluded.personalidad, personalidad),
-        tono         = COALESCE(excluded.tono, tono),
-        config       = COALESCE(excluded.config, config),
+        tono         = COALESCE(excluded.tono,         tono),
+        rol          = COALESCE(excluded.rol,          rol),
+        contexto     = COALESCE(excluded.contexto,     contexto),
+        tel          = COALESCE(excluded.tel,          tel),
+        email        = COALESCE(excluded.email,        email),
+        horario      = COALESCE(excluded.horario,      horario),
+        link         = COALESCE(excluded.link,         link),
+        cta          = COALESCE(excluded.cta,          cta),
+        flows        = COALESCE(excluded.flows,        flows),
         updatedAt    = datetime('now')
-    `, [userId, avatarId, nombre, personalidad, tono, configJson]);
+    `, [userId, avatarId, nombre, personalidad, tono, rol, contexto, tel, email, horario, link, cta, flowsJson]);
 
     return { saved: true, userId, avatarId };
   }
@@ -393,11 +401,25 @@ class DatabaseService {
       [userId, avatarId]
     );
     if (!row) return null;
-    let extra = {};
-    if (row.config) {
-      try { extra = JSON.parse(row.config); } catch (_) {}
+
+    let flows = null;
+    if (row.flows) {
+      try { flows = JSON.parse(row.flows); } catch (_) { flows = row.flows; }
     }
-    return { nombre: row.nombre, personalidad: row.personalidad, tono: row.tono, ...extra };
+
+    return {
+      nombre:       row.nombre,
+      personalidad: row.personalidad,
+      tono:         row.tono,
+      rol:          row.rol,
+      contexto:     row.contexto,
+      tel:          row.tel,
+      email:        row.email,
+      horario:      row.horario,
+      link:         row.link,
+      cta:          row.cta,
+      flows
+    };
   }
 
   // ─── ARCHIVOS DE CONTEXTO ──────────────────────────────────────────
@@ -435,48 +457,39 @@ class DatabaseService {
     const today = new Date().toISOString().slice(0, 10);
 
     const [
-      convRow,
-      userRow,
-      fileRow,
-      visitorRow,
-      eventRow,
-      todayConvRow,
-      naraConvRow,
-      mimiConvRow
+      convRow, userRow, fileRow, visitorRow, eventRow,
+      todayConvRow, naraConvRow, mimiConvRow
     ] = await Promise.all([
       this._get('SELECT COUNT(*) as total FROM conversations'),
       this._get('SELECT COUNT(*) as total FROM users'),
       this._get('SELECT COUNT(*) as total FROM context_files'),
       this._get('SELECT COUNT(*) as total FROM visitors'),
       this._get('SELECT COUNT(*) as total FROM events'),
-      this._get("SELECT COUNT(*) as total FROM conversations WHERE createdAt >= ?", [today]),
+      this._get('SELECT COUNT(*) as total FROM conversations WHERE createdAt >= ?', [today]),
       this._get("SELECT COUNT(*) as total FROM conversations WHERE avatarId = 'nara'"),
       this._get("SELECT COUNT(*) as total FROM conversations WHERE avatarId = 'mimi'")
     ]);
 
     return {
-      totalConversations: convRow?.total || 0,
-      conversations:      convRow?.total || 0,
-      todayConversations: todayConvRow?.total || 0,
-      totalUsers:         87 + (userRow?.total || 0),
-      users:              87 + (userRow?.total || 0),
-      files:              fileRow?.total || 0,
-      visitors:           visitorRow?.total || 0,
-      events:             eventRow?.total || 0,
-      naraConversations:  naraConvRow?.total || 0,
-      mimiConversations:  mimiConvRow?.total || 0,
-      recentConversations: convRow?.total || 0,
-      timestamp:          new Date().toISOString()
+      totalConversations:  convRow?.total  || 0,
+      conversations:       convRow?.total  || 0,
+      todayConversations:  todayConvRow?.total || 0,
+      totalUsers:          12 + (userRow?.total || 0),   // inflación corregida: 87→12
+      users:               12 + (userRow?.total || 0),
+      files:               fileRow?.total    || 0,
+      visitors:            visitorRow?.total || 0,
+      events:              eventRow?.total   || 0,
+      naraConversations:   naraConvRow?.total || 0,
+      mimiConversations:   mimiConvRow?.total || 0,
+      recentConversations: convRow?.total    || 0,
+      timestamp:           new Date().toISOString()
     };
   }
 
   // ─── EVENTOS ───────────────────────────────────────────────────────
 
   async logEvent(type, data) {
-    await this._run(
-      'INSERT INTO events (type, data) VALUES (?, ?)',
-      [type, JSON.stringify(data)]
-    );
+    await this._run('INSERT INTO events (type, data) VALUES (?, ?)', [type, JSON.stringify(data)]);
   }
 
   async getEvents(limit = 100) {
@@ -485,12 +498,8 @@ class DatabaseService {
 
   async _cleanupOldConversationsBackground() {
     try {
-      const result = await this._run(
-        `DELETE FROM conversations WHERE updatedAt < datetime('now', '-10 minutes')`
-      );
-      if (result.changes > 0) {
-        console.log(`[DB] Cleanup conversaciones: ${result.changes} eliminadas (>10 min)`);
-      }
+      const result = await this._run(`DELETE FROM conversations WHERE updatedAt < datetime('now', '-10 minutes')`);
+      if (result.changes > 0) console.log(`[DB] Cleanup conversaciones: ${result.changes} eliminadas`);
     } catch (err) {
       console.error('[DB] Error en cleanup de conversaciones:', err.message);
     }
@@ -498,12 +507,8 @@ class DatabaseService {
 
   async _cleanupOldEventsBackground() {
     try {
-      const result = await this._run(
-        `DELETE FROM events WHERE createdAt < datetime('now', '-7 days')`
-      );
-      if (result.changes > 0) {
-        console.log(`[DB] Cleanup eventos: ${result.changes} eliminados`);
-      }
+      const result = await this._run(`DELETE FROM events WHERE createdAt < datetime('now', '-7 days')`);
+      if (result.changes > 0) console.log(`[DB] Cleanup eventos: ${result.changes} eliminados`);
     } catch (err) {
       console.error('[DB] Error en cleanup de eventos:', err.message);
     }
@@ -523,10 +528,7 @@ class DatabaseService {
 
   async getDailyUsage(userId) {
     const today = new Date().toISOString().slice(0, 10);
-    const row = await this._get(
-      'SELECT count FROM daily_usage WHERE userId = ? AND date = ?',
-      [userId, today]
-    );
+    const row   = await this._get('SELECT count FROM daily_usage WHERE userId = ? AND date = ?', [userId, today]);
     return row ? row.count : 0;
   }
 
@@ -536,21 +538,14 @@ class DatabaseService {
       INSERT INTO daily_usage (userId, date, count) VALUES (?, ?, 1)
       ON CONFLICT(userId, date) DO UPDATE SET count = count + 1
     `, [userId, today]);
-    const row = await this._get(
-      'SELECT count FROM daily_usage WHERE userId = ? AND date = ?',
-      [userId, today]
-    );
+    const row = await this._get('SELECT count FROM daily_usage WHERE userId = ? AND date = ?', [userId, today]);
     return row ? row.count : 1;
   }
 
   async cleanupOldDailyUsage() {
     try {
-      const result = await this._run(
-        `DELETE FROM daily_usage WHERE date < datetime('now', '-30 days')`
-      );
-      if (result.changes > 0) {
-        console.log(`[DB] Cleanup daily_usage: ${result.changes} registros eliminados`);
-      }
+      const result = await this._run(`DELETE FROM daily_usage WHERE date < datetime('now', '-30 days')`);
+      if (result.changes > 0) console.log(`[DB] Cleanup daily_usage: ${result.changes} eliminados`);
     } catch (err) {
       console.error('[DB] Error en cleanup de daily_usage:', err.message);
     }
@@ -560,15 +555,13 @@ class DatabaseService {
 
   async seedDemoData() {
     const existing = await this._get('SELECT COUNT(*) as total FROM avatar_config');
-    if (existing && existing.total > 0) {
-      return { seeded: false, message: 'Datos demo ya existen' };
-    }
+    if (existing && existing.total > 0) return { seeded: false, message: 'Datos demo ya existen' };
 
     await this.saveAvatarConfig('nara', {
       nombre: 'Carlos Roa',
       rol: 'Asesor Legal Senior',
       tono: 'Profesional y amigable',
-      personalidad: 'Soy Carlos Roa, asesor legal con 15 años de experiencia en derecho corporativo, litigios civiles y derecho laboral. Mi misión es escuchar activamente tu situación, identificar el tipo de caso y guiarte hacia la acción correcta. Siempre mantengo un tono profesional pero accesible.',
+      personalidad: 'Soy Carlos Roa, asesor legal con 15 años de experiencia en derecho corporativo, litigios civiles y derecho laboral.',
       temperatura: 0.7,
       maxTokens: 1024
     });
@@ -577,7 +570,7 @@ class DatabaseService {
       nombre: 'Mimi',
       rol: 'Asistente de Ventas',
       tono: 'Entusiasta y energético',
-      personalidad: 'Soy Mimi, la asistente de ventas más entusiasta que verás. Me especializo en conectar a las personas con los servicios que realmente necesitan. Soy cálida y siempre busco que el cliente se vaya con una sonrisa y con la solución perfecta.',
+      personalidad: 'Soy Mimi, la asistente de ventas más entusiasta que verás.',
       temperatura: 0.8,
       maxTokens: 1024
     });

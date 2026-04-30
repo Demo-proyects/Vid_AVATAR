@@ -121,9 +121,14 @@ async function _sendToAI(userText){
   let msgDiv=null, textSpan=null;
 
   try{
+    // Leer token JWT — se guarda en localStorage desde admin.html
+    const _token = localStorage.getItem('vid_token');
+    const _headers = { 'Content-Type': 'application/json' };
+    if (_token) _headers['Authorization'] = 'Bearer ' + _token;
+
     const res = await fetch('/api/chat',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers: _headers,
       body:JSON.stringify({messages:[...messages], avatar:avatarId}),
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);

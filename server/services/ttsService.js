@@ -1,98 +1,43 @@
 /**
- * Servicio de TTS con caché en memoria
- * 
- * Fixes:
- * - Claves de caché hasheadas con SHA-256 (texto largo no genera keys enormes)
- * - LRU correcto (elimina la más antigua al saturarse)
+ * ttsService.js — OBSOLETO
+ *
+ * Google Cloud TTS fue eliminado como parte de la migración a OpenAI TTS.
+ * Este archivo se conserva para no romper imports existentes, pero
+ * ninguna ruta activa debería llamar a sus métodos.
+ *
+ * Si ves este error en los logs, busca el código que aún importa
+ * ttsService y cámbialo por openaiService (server/services/openaiService.js).
  */
 
-const textToSpeech = require('@google-cloud/text-to-speech');
-const crypto = require('crypto');
-const config = require('../config');
+// ── CAMBIO: eliminada toda la implementación de Google Cloud TTS ──
 
-const ttsCache = new Map();
-const MAX_CACHE_SIZE = 100;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+module.exports = {
+  /**
+   * @throws {Error} siempre — Google TTS eliminado
+   */
+  synthesize: async (_text, _voice) => {
+    throw new Error(
+      '[ttsService] Google TTS eliminado. Usa openaiService.synthesize() en su lugar.'
+    );
+  },
 
-class TTSService {
-  constructor() {
-    this.client = new textToSpeech.TextToSpeechClient({
-      keyFilename: config.tts.credentialsPath
-    });
+  /** No-op: no hay caché que limpiar */
+  clearCache: () => {
+    console.warn('[ttsService] clearCache() llamado en servicio obsoleto. No hace nada.');
+  },
+
+  /** Devuelve stats vacíos para no romper código de monitoreo */
+  getCacheStats: () => ({
+    size: 0,
+    maxSize: 0,
+    ttlMs: 0,
+    message: 'Google TTS desactivado — usa openaiService'
+  }),
+
+  /** Lanza error si alguien llama a listVoices() */
+  listVoices: async () => {
+    throw new Error(
+      '[ttsService] listVoices() no disponible. Google TTS eliminado.'
+    );
   }
-
-  _cleanTextForTTS(text) {
-    if (!text) return '';
-    let cleaned = text.replace(/\*+/g, '');
-    cleaned = cleaned
-      .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
-      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
-      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
-      .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')
-      .replace(/[\u{2600}-\u{26FF}]/gu, '')
-      .replace(/[\u{2700}-\u{27BF}]/gu, '')
-      .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-      .replace(/[\u{200D}]/gu, '');
-    return cleaned.replace(/\s+/g, ' ').trim();
-  }
-
-  _getCacheKey(text, voice) {
-    const hash = crypto.createHash('sha256').update(`${voice}:${text.trim().toLowerCase()}`).digest('hex');
-    return hash;
-  }
-
-  async synthesize(text, voice) {
-    const cleanText = this._cleanTextForTTS(text);
-    if (!cleanText) throw new Error('Texto vacío después de limpiar');
-
-    const cacheKey = this._getCacheKey(cleanText, voice);
-    const cached = ttsCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      return cached.audioContent;
-    }
-
-    const audioContent = await this._callGoogleTTS(cleanText, voice);
-    this._setCache(cacheKey, audioContent);
-    return audioContent;
-  }
-
-  async _callGoogleTTS(text, voice) {
-    const languageCode = voice.split('-').slice(0, 2).join('-');
-    const request = {
-      input: { text },
-      voice: { name: voice, languageCode },
-      audioConfig: { audioEncoding: 'MP3', speakingRate: 1.0, pitch: 0.0 }
-    };
-    try {
-      const [response] = await this.client.synthesizeSpeech(request);
-      return response.audioContent;
-    } catch (error) {
-      throw new Error(`Error al sintetizar voz: ${error.message}`);
-    }
-  }
-
-  _setCache(key, audioContent) {
-    if (ttsCache.size >= MAX_CACHE_SIZE) {
-      const oldestKey = ttsCache.keys().next().value;
-      ttsCache.delete(oldestKey);
-    }
-    ttsCache.set(key, { audioContent, timestamp: Date.now() });
-  }
-
-  async listVoices() {
-    const [result] = await this.client.listVoices({});
-    return result.voices;
-  }
-
-  clearCache() {
-    ttsCache.clear();
-    console.log('[TTS] Caché limpiado');
-  }
-
-  getCacheStats() {
-    return { size: ttsCache.size, maxSize: MAX_CACHE_SIZE, ttlMs: CACHE_TTL_MS };
-  }
-}
-
-module.exports = new TTSService();
+};

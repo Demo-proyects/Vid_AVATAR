@@ -16,6 +16,8 @@ const memoryService = require('../services/memoryService');
 const groqService = require('../services/groqService');
 const config = require('../config');
 const { requireAuth, requireAdmin } = require('../middleware/roles');
+// ── CAMBIO: importar aiRouter para invalidar caché de prompts tras guardar config ──
+const aiRouter = require('../services/aiRouter');
 
 // ═══════════════════════════════════════════════
 // SISTEMA
@@ -160,6 +162,9 @@ router.get('/avatar/configs', async (req, res) => {
 /**
  * PUT /api/admin/avatar/configs — solo admin supremo
  * Actualiza config global de uno o varios avatares
+ *
+ * CAMBIO: llama aiRouter.clearCache() tras guardar para que el siguiente
+ * mensaje de chat use la nueva personalidad sin esperar 60 s.
  */
 router.put('/avatar/configs', requireAdmin, async (req, res) => {
   try {
@@ -172,6 +177,9 @@ router.put('/avatar/configs', requireAdmin, async (req, res) => {
     }
 
     await db.saveAvatarConfig(avatarId, avatarConfig);
+    // ── CAMBIO: invalidar caché de prompts inmediatamente ──
+    aiRouter.clearCache();
+
     res.json({ success: true, message: `Config global de ${avatarId} actualizada` });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -198,6 +206,9 @@ router.get('/avatar/user-configs', requireAuth, async (req, res) => {
 /**
  * PUT /api/admin/avatar/user-config — usuario logueado
  * El usuario modifica la personalidad del avatar SOLO para sí mismo
+ *
+ * CAMBIO: llama aiRouter.clearCache() tras guardar para que el siguiente
+ * mensaje de chat del usuario refleje su nueva config personal de inmediato.
  */
 router.put('/avatar/user-config', requireAuth, async (req, res) => {
   try {
@@ -210,6 +221,9 @@ router.put('/avatar/user-config', requireAuth, async (req, res) => {
     }
 
     await db.saveUserAvatarConfig(userId, avatarId, { nombre, personalidad, tono, rol, contexto, tel, email, horario, link, cta, flows });
+    // ── CAMBIO: invalidar caché de prompts inmediatamente ──
+    aiRouter.clearCache();
+
     res.json({ success: true, message: `Tu config personal de ${avatarId} fue actualizada` });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

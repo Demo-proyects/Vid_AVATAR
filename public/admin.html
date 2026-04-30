@@ -785,6 +785,25 @@ textarea{min-height:90px;line-height:1.55}
               </div>
             </div>
 
+            <!-- Voz del asistente -->
+            <div class="card">
+              <div class="card-title"><span class="ct-ico">🎙</span> Voz del asistente <span class="badge badge-purple" style="margin-left:4px">Próximamente</span></div>
+              <p style="font-size:12px;color:var(--t3);margin-bottom:14px">Selecciona la voz con la que hablará tu asistente. Integración con OpenAI TTS en preparación.</p>
+              <div class="form-row">
+                <label>Voz</label>
+                <select id="av-voice" disabled title="Disponible próximamente con OpenAI TTS">
+                  <option value="">— Próximamente —</option>
+                  <option value="alloy">Alloy · Neutral y versátil</option>
+                  <option value="echo">Echo · Masculina y clara</option>
+                  <option value="fable">Fable · Expresiva y cálida</option>
+                  <option value="onyx">Onyx · Profunda y segura</option>
+                  <option value="nova">Nova · Amigable y positiva</option>
+                  <option value="shimmer">Shimmer · Suave y natural</option>
+                </select>
+                <div class="input-hint" style="margin-top:6px">🎙 Voz temporalmente no disponible — estará activa al configurar <code>OPENAI_API_KEY</code></div>
+              </div>
+            </div>
+
           </div><!-- /av-form-wrap -->
 
           <!-- PREVIEW -->
@@ -1274,7 +1293,7 @@ function cycleLang() {
 
 /* ═══ STATE ═══════════════════════════════════════════════ */
 const S = {
-  token: sessionStorage.getItem('vid_token') || null,
+  token: localStorage.getItem('vid_token') || null,
   user: null,
   currentAvatar: 'nara',
   currentSection: 'dashboard',
@@ -1436,7 +1455,7 @@ async function initAuth(){
   if(!S.token){renderAuthArea(null);return;}
   const {ok,data}=await api('GET','/api/auth/verify');
   if(ok&&data.user){S.user=data.user;renderAuthArea(data.user);}
-  else{S.token=null;sessionStorage.removeItem('vid_token');renderAuthArea(null);}
+  else{S.token=null;localStorage.removeItem('vid_token');renderAuthArea(null);}
 }
 
 function renderAuthArea(user){
@@ -1493,7 +1512,7 @@ async function doLogin(){
   const {ok,data}=await api('POST','/api/auth/login',{email,password:pass});
   if(ok&&data.token){
     S.token=data.token;S.user=data.user;
-    sessionStorage.setItem('vid_token',data.token);
+    localStorage.setItem('vid_token',data.token);
     closeModal('auth-modal');
     renderAuthArea(data.user);
     toast('Bienvenido, '+data.user.name,'ok');
@@ -1510,7 +1529,7 @@ async function doRegister(){
   const {ok,data}=await api('POST','/api/auth/register',{name,email,password:pass});
   if(ok&&data.token){
     S.token=data.token;S.user=data.user;
-    sessionStorage.setItem('vid_token',data.token);
+    localStorage.setItem('vid_token',data.token);
     closeModal('auth-modal');
     renderAuthArea(data.user);
     toast('Cuenta creada. ¡Bienvenido/a!','ok');
@@ -1520,7 +1539,7 @@ async function doRegister(){
 
 function doLogout(){
   S.token=null;S.user=null;
-  sessionStorage.removeItem('vid_token');
+  localStorage.removeItem('vid_token');
   renderAuthArea(null);
   toast('Sesión cerrada','info');
   navigate('dashboard',document.querySelector('[data-section=dashboard]'));
